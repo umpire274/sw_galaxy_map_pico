@@ -28,7 +28,6 @@ pub fn get_f64(attributes: &Value, key: &str) -> Option<f64> {
 /// Extracts an integer value from a JSON object.
 ///
 /// Accepts both numeric and string representations.
-#[allow(dead_code)]
 pub fn get_i64(attributes: &Value, key: &str) -> Option<i64> {
     match attributes.get(key) {
         Some(Value::Number(n)) => n.as_i64(),
