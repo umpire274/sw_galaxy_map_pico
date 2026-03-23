@@ -4,6 +4,67 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.6.1] - 2026-03-23
+
+### ✨ New — Routing iteration explain
+
+- Added iteration-level explain output to the Pico route engine
+- Each routing step now records:
+    - iteration index
+    - colliding segment index
+    - obstacle hit on that segment
+    - evaluated candidates
+    - selected candidate
+
+### 🧭 Route explain improvements
+
+- Route output now distinguishes clearly between:
+    - direct route status
+    - final route status
+- Added explicit `Direct collision` section
+- Added `Routing iterations` section for step-by-step routing introspection
+
+### 🔍 Iteration tracking
+
+- Introduced `RouteIterationExplain`
+- Route summary now stores explain history for each routing pass
+- Iterative router now records:
+    - colliding obstacle
+    - candidate set
+    - chosen waypoint for the iteration
+
+### 🧩 Output clarity
+
+- Improved route result presentation for iterative routing
+- Final route metrics are now easier to compare against the original direct route
+- Explain output is now significantly closer to the desktop core `route explain` workflow
+
+### ✅ Validation milestone
+
+- Confirmed routing iteration output on `Coruscant -> Naboo`
+- Iteration explain correctly reports:
+    - segment `0`
+    - obstacle `Darepp [2633]`
+    - selected detour side and offset
+    - candidate count
+
+### ⚠️ Current limitations
+
+- Only one practical reroute iteration is exercised in the current scenario
+- Candidate output is aggregated globally, not grouped visually by iteration
+- No recursive multi-waypoint explain tree yet
+- No persisted iteration history in database yet
+
+### 🚧 Next steps
+
+- Group detour candidates by iteration in output
+- Support multiple reroute iterations across expanded paths
+- Add per-iteration path snapshot
+- Improve parity with desktop core explain formatting
+- Persist route explain data for later inspection
+
+---
+
 ## [0.6.0] - 2026-03-23
 
 ### ✨ New — First iterative router
