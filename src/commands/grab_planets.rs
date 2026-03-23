@@ -5,7 +5,7 @@ use reqwest::blocking::Client;
 use rusqlite::Connection;
 use std::time::Duration;
 
-use crate::db::planets::{replace_unknown_planets, upsert_planet};
+use crate::db::planets::{insert_aliases, replace_unknown_planets, upsert_planet};
 use crate::db::schema;
 use crate::net::connectivity::ensure_arcgis_reachable;
 use crate::provision::arcgis::{
@@ -82,6 +82,7 @@ pub fn run(galaxy_db_path: &str, dry_run: bool) -> Result<()> {
 
     for record in &valid_planets {
         upsert_planet(&tx, record)?;
+        insert_aliases(&tx, record)?;
     }
 
     replace_unknown_planets(&tx, &skipped_rows)?;

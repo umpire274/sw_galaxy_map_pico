@@ -23,7 +23,7 @@ pub struct DatabaseCounts {
 /// Main database facade.
 pub struct Database {
     /// Underlying database connections.
-    connections: DatabaseConnections,
+    pub connections: DatabaseConnections,
 }
 
 impl Database {
@@ -32,6 +32,11 @@ impl Database {
         let connections = DatabaseConnections::open(galaxy_db_path, history_db_path)?;
         schema::initialize_history_schema(&connections.history)?;
         Ok(Self { connections })
+    }
+
+    /// Returns the readonly galaxy database connection.
+    pub fn galaxy_conn(&self) -> &rusqlite::Connection {
+        &self.connections.galaxy
     }
 
     /// Returns aggregate counts from both databases.

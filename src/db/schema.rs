@@ -69,6 +69,18 @@ pub fn initialize_galaxy_schema(conn: &Connection) -> Result<()> {
 
         CREATE INDEX IF NOT EXISTS idx_planets_unknown_planet
             ON planets_unknown(planet);
+
+        CREATE TABLE IF NOT EXISTS planet_aliases (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            planet_fid      INTEGER NOT NULL,
+            alias           TEXT NOT NULL,
+            alias_norm      TEXT NOT NULL,
+            source          TEXT NOT NULL,
+            UNIQUE(planet_fid, alias)
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_planet_aliases_alias_norm
+            ON planet_aliases(alias_norm);
         "#,
     )?;
 
