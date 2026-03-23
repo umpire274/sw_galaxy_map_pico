@@ -3,7 +3,7 @@
 use crate::config::Cli;
 use crate::db::Database;
 use crate::db::mapper::convert_to_nav_planet;
-use crate::db::planets::{PlanetDetails, get_planet_details, search_planets};
+use crate::db::planets::{PlanetDetails, get_planet_details, load_route_obstacles, search_planets};
 use crate::nav::models::{RouteRequest, SpeedProfile};
 use crate::nav::route::calculate_basic_route;
 use crate::ui;
@@ -98,7 +98,9 @@ impl App {
             speed_profile,
         };
 
-        let route = calculate_basic_route(&request);
+        let obstacles = load_route_obstacles(self.db.galaxy_conn(), from.remote_id, to.remote_id)?;
+
+        let route = calculate_basic_route(&request, &obstacles);
 
         ui::show_route_result(&from.name, &to.name, &route, speed_profile);
         ui::prompt_go_back()?;

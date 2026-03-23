@@ -4,6 +4,72 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.5.1] - 2026-03-23
+
+### ✨ New — Obstacle detection (Phase 3)
+
+- Introduced obstacle detection along direct routes using point-to-segment distance
+- Implemented closest approach calculation between route segment and planetary obstacles
+- Added safety clearance model:
+    - `required_clearance = obstacle_radius + route_clearance`
+- Introduced violation detection when route intersects obstacle safety zone
+
+### 🧩 Navigation model extensions
+
+- Added new navigation data structures:
+    - `Obstacle`
+    - `ObstacleCheck`
+    - `Point2`
+- Extended `RouteSummary` to include closest obstacle violation information
+
+### 📐 Geometry layer
+
+- Implemented reusable geometry utilities:
+    - Euclidean distance (2D)
+    - Closest point on segment
+    - Segment interpolation factor `t ∈ [0,1]`
+- Ensured numerical stability for degenerate segments
+
+### ⚠️ Route safety feedback
+
+- Route result now includes:
+    - closest obstacle name and ID
+    - closest distance to route
+    - required minimum clearance
+    - closest point on segment
+    - segment factor `t`
+    - violation flag
+
+### 🔍 Debug & validation (internal)
+
+- Added diagnostic tooling to inspect obstacle ranking and collision behavior
+- Identified discrepancy with desktop core obstacle selection
+- Discovered presence of large number of `(x=0, y=0)` placeholder records in dataset
+
+### 🧠 Key findings
+
+- Not all planets should be treated as routing obstacles
+- Desktop core uses a filtered obstacle set (via `waypoint_planets`)
+- Current Pico implementation uses full `planets` table → temporary divergence expected
+
+### ⚠️ Known limitations
+
+- All planets are currently treated as potential obstacles (no filtering yet)
+- Obstacle radius is fixed (`2.0 pc`) and not data-driven
+- No detour generation implemented yet
+- No obstacle prioritization based on route traversal order (first-hit logic incomplete)
+- Dataset contains placeholder coordinates `(0,0)` affecting collision results
+
+### 🚧 Next steps
+
+- Introduce `waypoints` and `waypoint_planets` schema
+- Implement obstacle query parity with desktop core
+- Port first-hit collision logic from desktop
+- Implement detour generation and waypoint insertion
+- Align ETA model with desktop routing engine
+
+---
+
 ## [0.5.0] - 2026-03-23
 
 ### ✨ New — First route calculation workflow

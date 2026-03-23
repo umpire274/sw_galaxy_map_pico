@@ -1,11 +1,11 @@
 //! Planet catalog queries.
 
+use crate::nav::models::Obstacle;
+use crate::provision::arcgis::{RemotePlanetRecord, SkippedPlanetRow};
+use crate::utils::normalize::normalize_text;
 use anyhow::Result;
 use rusqlite::{Connection, OptionalExtension, Transaction, params};
 use std::collections::HashSet;
-
-use crate::provision::arcgis::{RemotePlanetRecord, SkippedPlanetRow};
-use crate::utils::normalize::normalize_text;
 
 /// Detailed planet information used by the textual UI.
 #[derive(Debug, Clone)]
@@ -298,4 +298,33 @@ pub fn get_planet_details(conn: &Connection, remote_id: i64) -> Result<Option<Pl
         .optional()?;
 
     Ok(result)
+}
+
+/// Returns all planets as route obstacles, excluding origin and destination.
+pub fn load_route_obstacles(conn: &Connection, from_id: i64, to_id: i64) -> Result<Vec<Obstacle>> {
+    let mut stmt = conn.prepare(
+        r#"
+        SELECT remote_id, name, x, y
+        FROM planets
+        WHERE remote_id NOT IN (?1, ?2)
+        ORDER BY remote_id
+        "#,
+    )?;
+
+    let rows = stmt.query_map([from_id, to_id], |row| {
+        Ok(Obstacle {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            x: row.get(2)?,
+            y: row.get(3)?,
+            radius: 2.0,
+        })
+    })?;
+
+    let mut obstacles = Vec::new();
+    for row in rows {
+        obstacles.push(row?);
+    }
+
+    Ok(obstacles)
 }
