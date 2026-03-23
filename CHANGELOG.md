@@ -4,6 +4,88 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.2.0] - 2026-03-23
+
+### ✨ New — ArcGIS integration (bootstrap)
+
+- Introduced initial ArcGIS integration for remote planet data retrieval
+- Added `grab-planets` command to download planet dataset from ArcGIS source
+- Implemented paginated download using ArcGIS `resultOffset` / `resultRecordCount`
+
+### 🌐 Networking
+
+- Added `reqwest` (blocking client) for HTTP communication
+- Implemented source-specific connectivity check:
+    - validates reachability of ArcGIS endpoint before execution
+    - aborts command if remote service is not reachable
+
+### 🧩 Provisioning layer
+
+- Introduced `provision::arcgis` module:
+    - layer metadata retrieval (`maxRecordCount`)
+    - feature page download
+    - full dataset pagination
+- Added dynamic endpoint construction using a single `LAYER_URL`
+
+### 📥 Data handling (foundation)
+
+- Introduced `ArcGisPlanetFeature` structure for raw feature handling
+- Implemented JSON parsing helpers (`get_string`, `get_f64`, `get_i64`)
+- Added initial validation of feature payloads
+
+### 🔍 Dry-run diagnostics
+
+- Added `--dry-run` mode to inspect remote dataset without modifying database
+- Displays:
+    - total downloaded features
+    - validated feature payloads
+    - skipped planet count
+    - breakdown of skipped reasons:
+        - missing planet name
+        - missing X coordinate
+        - missing Y coordinate
+
+- Skipped planets follow the same logic as the main project:
+    - records missing required fields are excluded from `planets`
+    - these records are intended for `planets_unknown` in future versions
+
+### 🧠 CLI
+
+- Extended CLI with subcommands using `clap`:
+    - `grab-planets`
+    - optional `--dry-run` mode
+
+### 🏗️ Architecture
+
+- Added new modules:
+    - `commands` → CLI command handlers
+    - `net` → connectivity checks
+    - `provision` → remote data acquisition
+    - `utils` → shared JSON helpers
+- Maintained strict separation between:
+    - remote data acquisition
+    - parsing utilities
+    - CLI orchestration
+
+### ⚠️ Current limitations
+
+- Planet data is downloaded but not yet persisted into database
+- No normalization or mapping to internal structures yet
+- No alias or search table integration
+- No differential update logic (full fetch only)
+
+### 🚧 Next steps
+
+- Introduce `RemotePlanetRecord`
+- Implement mapping from ArcGIS features
+- Add upsert logic for:
+    - `planets`
+    - `planets_unknown`
+- Introduce alias extraction and persistence
+- Build search index (`planet_search`)
+
+---
+
 ## [0.1.0] - 2026-03-23
 
 ### ✨ Initial Bootstrap Release
