@@ -1,0 +1,25 @@
+[package]
+name = "sw_galaxy_map_pico"
+version = "0.1.0"
+edition = "2024"
+authors = ["Alessandro Maestri"]
+description = "Pico-oriented offline Star Wars galaxy route planner and navicomputer"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/umpire274/sw_galaxy_map_pico"
+keywords = ["star-wars", "sqlite", "navigation", "route-planner", "picocalc"]
+categories = ["command-line-utilities", "database"]
+
+[dependencies]
+anyhow = "1.0.102"
+chrono = { version = "0.4.44", features = ["clock"] }
+clap = { version = "4.6.0", features = ["derive"] }
+rusqlite = { version = "0.39.0", features = ["bundled"] }
+serde = { version = "1.0.228", features = ["derive"] }
+thiserror = "2.0.18"
+
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "z"
+strip = true
