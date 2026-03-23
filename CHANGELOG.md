@@ -4,6 +4,78 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.6.0] - 2026-03-23
+
+### ✨ New — First iterative router
+
+- Introduced the first iterative routing workflow for `sw_galaxy_map_pico`
+- Routes are now treated as multi-segment paths instead of a single direct line
+- Added support for inserting detour waypoints directly into the route path
+
+### 🧭 Route path model
+
+- Introduced path-based routing using ordered 2D points
+- Added segment abstraction for route analysis
+- Added waypoint insertion after a colliding segment
+- Added full path segment rebuilding for rerouted paths
+
+### ⚠️ Collision analysis
+
+- Added support for detecting the first collision across an entire path
+- Preserved direct-route collision analysis separately from final-route validation
+- Route output now clearly distinguishes:
+    - direct route status
+    - final route status
+
+### 🔄 Applied reroute
+
+- Selected detour waypoint is now applied to the final path
+- Final route metrics are now computed from the rerouted path:
+    - final distance
+    - final ETA
+- Added full safety verification for the rerouted path
+
+### 🔍 Explain improvements
+
+- Added explicit direct collision section
+- Added final-route status reporting
+- Added structured explain output for:
+    - collision details
+    - selected detour
+    - full detour candidate list
+
+### 📐 Routing behavior
+
+- Preserved direct-route metrics for comparison
+- Recomputed final route from actual inserted waypoint
+- Candidate evaluation now supports iterative path insertion workflow
+
+### ✅ Validation milestone
+
+- Direct route and first-hit obstacle detection remain aligned with desktop core
+- Pico now produces:
+    - unsafe direct route
+    - safe final rerouted path
+    - effective final distance and ETA
+
+### ⚠️ Current limitations
+
+- Only one inserted waypoint is effectively used in current practical flow
+- No recursive reroute chain for additional collisions beyond the first applied path adjustment
+- No persistence of computed paths or detours yet
+- No iteration-by-iteration explain history yet
+- Obstacle loading still depends on the initial route bounding box
+
+### 🚧 Next steps
+
+- Add iterative explain by routing step
+- Support multiple detour waypoints in real route construction
+- Recompute obstacle search bounds dynamically after path expansion
+- Persist computed detours and route paths
+- Continue parity work with desktop core route explain model
+
+---
+
 ## [0.5.5] - 2026-03-23
 
 ### ✨ New — First applied reroute

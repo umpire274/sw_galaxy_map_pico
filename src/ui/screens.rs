@@ -90,79 +90,98 @@ pub fn show_route_result(from: &str, to: &str, route: &RouteSummary, speed: Spee
     println!("Route multiplier : {:.3}", speed.route_multiplier);
     println!("Effective speed  : {:.2} pc/h", effective_speed);
 
+    println!();
+    println!(
+        "Direct route     : {}",
+        if route.direct_route_has_collision {
+            "unsafe"
+        } else {
+            "safe"
+        }
+    );
+
+    println!(
+        "Final route      : {}",
+        if route.used_detour {
+            if route.detour_is_safe {
+                "safe"
+            } else {
+                "unsafe"
+            }
+        } else if route.direct_route_has_collision {
+            "unsafe"
+        } else {
+            "safe"
+        }
+    );
+
     if route.used_detour {
         println!("Final distance   : {:.6} pc", route.final_distance_parsec);
         println!(
             "Final ETA        : {}",
             format_eta_dd_hh_mm_ss(route.final_eta_seconds)
         );
-        println!("Detour safe      : {}", route.detour_is_safe);
     }
 
-    match &route.closest_violation {
-        Some(v) => {
-            println!();
-            println!("Obstacle warning : YES");
-            println!("Closest obstacle : {} [{}]", v.obstacle_name, v.obstacle_id);
-            println!(
-                "Obstacle center  : ({:.3}, {:.3})",
-                v.obstacle_x, v.obstacle_y
-            );
-            println!("Closest distance : {:.3} pc", v.closest_distance);
-            println!("Required minimum : {:.3} pc", v.required_clearance);
-            println!(
-                "Closest point    : ({:.3}, {:.3})",
-                v.closest_point.x, v.closest_point.y
-            );
-            println!("Segment factor t : {:.3}", v.t);
-        }
-        None => {
-            println!();
-            println!("Obstacle warning : NO");
-        }
+    if let Some(v) = &route.closest_violation {
+        println!();
+        println!("Direct collision:");
+        println!("  obstacle       : {} [{}]", v.obstacle_name, v.obstacle_id);
+        println!(
+            "  center         : ({:.3}, {:.3})",
+            v.obstacle_x, v.obstacle_y
+        );
+        println!("  closest dist   : {:.3} pc", v.closest_distance);
+        println!("  required       : {:.3} pc", v.required_clearance);
+        println!(
+            "  closest point  : ({:.3}, {:.3})",
+            v.closest_point.x, v.closest_point.y
+        );
+        println!("  segment t      : {:.3}", v.t);
     }
 
     if let Some(explain) = &route.collision_explain {
         println!();
         println!("Collision explain:");
         println!(
-            "  obstacle        : {} [{}]",
+            "  obstacle       : {} [{}]",
             explain.obstacle_name, explain.obstacle_id
         );
         println!(
-            "  center          : ({:.3}, {:.3})",
+            "  center         : ({:.3}, {:.3})",
             explain.obstacle_x, explain.obstacle_y
         );
-        println!("  radius          : {:.3}", explain.obstacle_radius);
-        println!("  closest dist    : {:.3}", explain.closest_distance);
-        println!("  required        : {:.3}", explain.required_clearance);
-        println!("  violated by     : {:.3}", explain.violated_by);
+        println!("  radius         : {:.3}", explain.obstacle_radius);
+        println!("  closest dist   : {:.3}", explain.closest_distance);
+        println!("  required       : {:.3}", explain.required_clearance);
+        println!("  violated by    : {:.3}", explain.violated_by);
         println!(
-            "  closest point   : ({:.3}, {:.3})",
+            "  closest point  : ({:.3}, {:.3})",
             explain.closest_point.x, explain.closest_point.y
         );
-        println!("  t               : {:.3}", explain.t);
-        println!("  penalty         : {:.3}", explain.proximity_penalty);
+        println!("  t              : {:.3}", explain.t);
+        println!("  penalty        : {:.3}", explain.proximity_penalty);
     }
 
     match &route.detour_candidate {
         Some(candidate) => {
             println!();
+            println!("Selected detour:");
             println!(
-                "Selected detour   : ({:.3}, {:.3})",
+                "  waypoint       : ({:.3}, {:.3})",
                 candidate.waypoint.x, candidate.waypoint.y
             );
-            println!("  side            : {}", candidate.side);
-            println!("  offset used     : {:.3}", candidate.offset_used);
-            println!("  score           : {:.6}", candidate.total_score);
-            println!("  base distance   : {:.6}", candidate.base_distance);
-            println!("  turn penalty    : {:.6}", candidate.turn_penalty);
-            println!("  back penalty    : {:.6}", candidate.back_penalty);
-            println!("  proximity pen.  : {:.6}", candidate.proximity_penalty);
+            println!("  side           : {}", candidate.side);
+            println!("  offset used    : {:.3}", candidate.offset_used);
+            println!("  score          : {:.6}", candidate.total_score);
+            println!("  base distance  : {:.6}", candidate.base_distance);
+            println!("  turn penalty   : {:.6}", candidate.turn_penalty);
+            println!("  back penalty   : {:.6}", candidate.back_penalty);
+            println!("  proximity pen. : {:.6}", candidate.proximity_penalty);
         }
         None => {
             println!();
-            println!("Selected detour   : none");
+            println!("Selected detour  : none");
         }
     }
 

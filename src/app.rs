@@ -1,5 +1,7 @@
 //! Application state and orchestration.
 
+use anyhow::Result;
+
 use crate::config::Cli;
 use crate::db::Database;
 use crate::db::mapper::convert_to_nav_planet;
@@ -7,9 +9,8 @@ use crate::db::planets::{PlanetDetails, get_planet_details, search_planets};
 use crate::db::queries::{ObstacleQueryBounds, list_routing_obstacles_in_bbox};
 use crate::nav::geometry::segment_bbox;
 use crate::nav::models::{Point2, RouteRequest, SpeedProfile};
-use crate::nav::route::calculate_basic_route;
+use crate::nav::route::calculate_iterative_route;
 use crate::ui;
-use anyhow::Result;
 
 /// Central application object.
 pub struct App {
@@ -61,17 +62,17 @@ impl App {
     }
 
     /// Handles the interactive planet search flow.
-    /// Handles the interactive planet search flow.
     fn handle_search_planet(&self) -> Result<()> {
         let _ = self.search_and_select_planet("Search planet", SelectionMode::ViewOnly)?;
-
         Ok(())
     }
 
+    /// Starts the reusable planet selection flow and returns the chosen planet.
     fn select_planet(&self, title: &str) -> Result<Option<PlanetDetails>> {
         self.search_and_select_planet(title, SelectionMode::Select)
     }
 
+    /// Handles the route calculation flow.
     fn handle_calculate_route(&self) -> Result<()> {
         ui::show_section_title("Calculate route");
 
@@ -127,7 +128,7 @@ impl App {
             2.0,
         )?;
 
-        let route = calculate_basic_route(&request, &obstacles);
+        let route = calculate_iterative_route(&request, &obstacles);
 
         ui::show_route_result(&from.name, &to.name, &route, speed_profile);
         ui::prompt_go_back()?;
@@ -144,8 +145,7 @@ impl App {
         println!("Aliases        : {}", counts.aliases);
         println!("History entries: {}", counts.history_entries);
 
-        let _ = ui::prompt_go_back()?;
-
+        ui::prompt_go_back()?;
         Ok(())
     }
 
@@ -166,12 +166,15 @@ impl App {
             Some(details) => Ok(Some(details)),
             None => {
                 println!("Planet details not found.");
-                let _ = ui::prompt_go_back()?;
+                ui::prompt_go_back()?;
                 Ok(None)
             }
         }
     }
 
+    /// Shared search flow used both for:
+    /// - view-only search (`Search planet`)
+    /// - actual selection (`Calculate route`)
     fn search_and_select_planet(
         &self,
         title: &str,
@@ -190,7 +193,7 @@ impl App {
 
             if results.is_empty() {
                 ui::show_search_results(&results);
-                let _ = ui::prompt_go_back()?;
+                ui::prompt_go_back()?;
                 continue;
             }
 
@@ -205,7 +208,7 @@ impl App {
                 match mode {
                     SelectionMode::ViewOnly => {
                         ui::show_planet_details(&details);
-                        let _ = ui::prompt_go_back()?;
+                        ui::prompt_go_back()?;
                         continue;
                     }
                     SelectionMode::Select => {
@@ -248,7 +251,7 @@ impl App {
                 match mode {
                     SelectionMode::ViewOnly => {
                         ui::show_planet_details(&details);
-                        let _ = ui::prompt_go_back()?;
+                        ui::prompt_go_back()?;
                     }
                     SelectionMode::Select => {
                         return Ok(Some(details));

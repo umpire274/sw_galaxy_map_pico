@@ -198,4 +198,22 @@ pub struct RouteSummary {
     pub final_eta_seconds: u64,
     /// Whether both legs of the detoured route are safe.
     pub detour_is_safe: bool,
+    /// Whether the original direct route had a collision.
+    pub direct_route_has_collision: bool,
+}
+
+/// A full route path composed of multiple points.
+#[derive(Debug, Clone)]
+pub struct RoutePath {
+    /// Ordered list of points composing the route.
+    pub points: Vec<Point2>,
+}
+
+impl From<&RouteWaypoint> for Point2 {
+    fn from(value: &RouteWaypoint) -> Self {
+        Self {
+            x: value.x,
+            y: value.y,
+        }
+    }
 }
