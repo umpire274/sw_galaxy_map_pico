@@ -1,6 +1,8 @@
 //! Textual screen helpers.
 
 use crate::db::planets::PlanetDetails;
+use crate::nav::eta::format_eta_dd_hh_mm_ss;
+use crate::nav::models::{RouteSummary, SpeedProfile};
 
 /// Renders the application banner.
 pub fn show_banner() {
@@ -65,4 +67,27 @@ pub fn show_planet_details(details: &PlanetDetails) {
 pub fn show_search_results_screen(results: &[(i64, String)]) {
     show_section_title("Search results");
     show_search_results(results);
+}
+
+/// Renders the route calculation result.
+pub fn show_route_result(from: &str, to: &str, route: &RouteSummary, speed: SpeedProfile) {
+    let effective_speed =
+        (speed.base_speed_parsec_per_hour / speed.hyperdrive_class) * speed.route_multiplier;
+
+    println!();
+    println!("== Route result ==");
+    println!("From             : {from}");
+    println!("To               : {to}");
+    println!("Distance         : {:.2} pc", route.distance_parsec);
+    println!(
+        "ETA              : {}",
+        format_eta_dd_hh_mm_ss(route.eta_seconds)
+    );
+    println!(
+        "Base speed       : {:.2} pc/h",
+        speed.base_speed_parsec_per_hour
+    );
+    println!("Hyperdrive class : {:.2}", speed.hyperdrive_class);
+    println!("Route multiplier : {:.3}", speed.route_multiplier);
+    println!("Effective speed  : {:.2} pc/h", effective_speed);
 }
