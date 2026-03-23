@@ -77,9 +77,9 @@ pub fn show_route_result(from: &str, to: &str, route: &RouteSummary, speed: Spee
     println!("== Route result ==");
     println!("From             : {from}");
     println!("To               : {to}");
-    println!("Distance         : {:.2} pc", route.distance_parsec);
+    println!("Direct distance  : {:.2} pc", route.distance_parsec);
     println!(
-        "ETA              : {}",
+        "Direct ETA       : {}",
         format_eta_dd_hh_mm_ss(route.eta_seconds)
     );
     println!(
@@ -90,11 +90,24 @@ pub fn show_route_result(from: &str, to: &str, route: &RouteSummary, speed: Spee
     println!("Route multiplier : {:.3}", speed.route_multiplier);
     println!("Effective speed  : {:.2} pc/h", effective_speed);
 
+    if route.used_detour {
+        println!("Final distance   : {:.6} pc", route.final_distance_parsec);
+        println!(
+            "Final ETA        : {}",
+            format_eta_dd_hh_mm_ss(route.final_eta_seconds)
+        );
+        println!("Detour safe      : {}", route.detour_is_safe);
+    }
+
     match &route.closest_violation {
         Some(v) => {
             println!();
             println!("Obstacle warning : YES");
             println!("Closest obstacle : {} [{}]", v.obstacle_name, v.obstacle_id);
+            println!(
+                "Obstacle center  : ({:.3}, {:.3})",
+                v.obstacle_x, v.obstacle_y
+            );
             println!("Closest distance : {:.3} pc", v.closest_distance);
             println!("Required minimum : {:.3} pc", v.required_clearance);
             println!(
@@ -106,6 +119,77 @@ pub fn show_route_result(from: &str, to: &str, route: &RouteSummary, speed: Spee
         None => {
             println!();
             println!("Obstacle warning : NO");
+        }
+    }
+
+    if let Some(explain) = &route.collision_explain {
+        println!();
+        println!("Collision explain:");
+        println!(
+            "  obstacle        : {} [{}]",
+            explain.obstacle_name, explain.obstacle_id
+        );
+        println!(
+            "  center          : ({:.3}, {:.3})",
+            explain.obstacle_x, explain.obstacle_y
+        );
+        println!("  radius          : {:.3}", explain.obstacle_radius);
+        println!("  closest dist    : {:.3}", explain.closest_distance);
+        println!("  required        : {:.3}", explain.required_clearance);
+        println!("  violated by     : {:.3}", explain.violated_by);
+        println!(
+            "  closest point   : ({:.3}, {:.3})",
+            explain.closest_point.x, explain.closest_point.y
+        );
+        println!("  t               : {:.3}", explain.t);
+        println!("  penalty         : {:.3}", explain.proximity_penalty);
+    }
+
+    match &route.detour_candidate {
+        Some(candidate) => {
+            println!();
+            println!(
+                "Selected detour   : ({:.3}, {:.3})",
+                candidate.waypoint.x, candidate.waypoint.y
+            );
+            println!("  side            : {}", candidate.side);
+            println!("  offset used     : {:.3}", candidate.offset_used);
+            println!("  score           : {:.6}", candidate.total_score);
+            println!("  base distance   : {:.6}", candidate.base_distance);
+            println!("  turn penalty    : {:.6}", candidate.turn_penalty);
+            println!("  back penalty    : {:.6}", candidate.back_penalty);
+            println!("  proximity pen.  : {:.6}", candidate.proximity_penalty);
+        }
+        None => {
+            println!();
+            println!("Selected detour   : none");
+        }
+    }
+
+    if !route.detour_candidates.is_empty() {
+        println!();
+        println!("Detour candidates:");
+        for (index, candidate) in route.detour_candidates.iter().enumerate() {
+            println!(
+                "  {:02}) side={} offset={:.3} valid={} score={:.6}",
+                index + 1,
+                candidate.side,
+                candidate.offset_used,
+                candidate.is_valid,
+                candidate.total_score
+            );
+
+            if let Some(reason) = &candidate.rejection_reason {
+                println!("      reason      : {reason}");
+            } else {
+                println!(
+                    "      breakdown   : base={:.6} turn={:.6} back={:.6} prox={:.6}",
+                    candidate.base_distance,
+                    candidate.turn_penalty,
+                    candidate.back_penalty,
+                    candidate.proximity_penalty
+                );
+            }
         }
     }
 }

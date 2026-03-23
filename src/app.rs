@@ -3,8 +3,10 @@
 use crate::config::Cli;
 use crate::db::Database;
 use crate::db::mapper::convert_to_nav_planet;
-use crate::db::planets::{PlanetDetails, get_planet_details, load_route_obstacles, search_planets};
-use crate::nav::models::{RouteRequest, SpeedProfile};
+use crate::db::planets::{PlanetDetails, get_planet_details, search_planets};
+use crate::db::queries::{ObstacleQueryBounds, list_routing_obstacles_in_bbox};
+use crate::nav::geometry::segment_bbox;
+use crate::nav::models::{Point2, RouteRequest, SpeedProfile};
 use crate::nav::route::calculate_basic_route;
 use crate::ui;
 use anyhow::Result;
@@ -93,12 +95,37 @@ impl App {
         };
 
         let request = RouteRequest {
-            from: from_nav,
-            to: to_nav,
+            from: from_nav.clone(),
+            to: to_nav.clone(),
             speed_profile,
         };
 
-        let obstacles = load_route_obstacles(self.db.galaxy_conn(), from.remote_id, to.remote_id)?;
+        let from_point = Point2 {
+            x: from_nav.x,
+            y: from_nav.y,
+        };
+
+        let to_point = Point2 {
+            x: to_nav.x,
+            y: to_nav.y,
+        };
+
+        let (min_x, max_x, min_y, max_y) = segment_bbox(from_point, to_point);
+
+        let bounds = ObstacleQueryBounds {
+            min_x,
+            max_x,
+            min_y,
+            max_y,
+        };
+
+        let obstacles = list_routing_obstacles_in_bbox(
+            self.db.galaxy_conn(),
+            bounds,
+            from.remote_id,
+            to.remote_id,
+            2.0,
+        )?;
 
         let route = calculate_basic_route(&request, &obstacles);
 
