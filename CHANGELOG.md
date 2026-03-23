@@ -4,6 +4,80 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.4.0] - 2026-03-23
+
+### ✨ New — Search & interaction layer
+
+- Implemented full planet search functionality in the interactive UI
+- Added support for:
+    - search by canonical name
+    - search by alias (`name0`, `name1`, `name2`)
+- Introduced result deduplication across name and alias matches
+
+### 🔎 Search system
+
+- Added `planet_aliases` table:
+    - stores alternate planet names
+    - supports normalized search (`alias_norm`)
+- Implemented:
+    - `search_planets_by_name`
+    - `search_planets_by_alias`
+    - unified `search_planets` function
+
+### 🧭 Interactive navigation
+
+- Implemented interactive search flow:
+    - query input
+    - result list
+    - numeric selection
+    - planet detail view
+
+- Added planet detail screen:
+    - region, sector, system, grid
+    - coordinates (X/Y)
+    - canon / legends flags
+    - status
+
+### 🖥️ UI improvements
+
+- Main menu is now fully interactive
+- Standardized navigation:
+    - `ENTER` = go back
+    - `0` = go back / exit
+- Improved navigation flow:
+    - returning from planet detail restores result list
+    - returning from results restores search query
+
+### 🧩 Architecture
+
+- Introduced `utils::normalize` for text normalization
+- Extended `db::planets` with:
+    - alias insertion
+    - search helpers
+    - planet detail retrieval
+
+- Improved separation of concerns:
+    - UI (input/screens)
+    - application logic (app)
+    - persistence layer (db)
+    - provisioning layer (arcgis)
+
+### ⚠️ Current limitations
+
+- No fuzzy matching yet
+- No ranking or scoring of results
+- No search index (FTS)
+- Route calculation not yet integrated with search
+
+### 🚧 Next steps
+
+- Add fuzzy search (Levenshtein / trigram)
+- Introduce FTS5 search index
+- Implement route calculation from selected planets
+- Add favorites and recent routes integration
+
+---
+
 ## [0.3.0] - 2026-03-23
 
 ### ✨ New — Planet data persistence
