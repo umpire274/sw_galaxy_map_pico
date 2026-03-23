@@ -4,6 +4,88 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.3.0] - 2026-03-23
+
+### ✨ New — Planet data persistence
+
+- Introduced full data import pipeline from ArcGIS into local SQLite database
+- Implemented normalization layer:
+    - `RemotePlanetRecord` for valid planets
+    - `SkippedPlanetRow` for invalid/skipped entries
+
+### 🗄️ Database
+
+- Added galaxy catalog schema:
+    - `planets` table for valid records
+    - `planets_unknown` table for skipped/invalid records
+- Implemented upsert logic for `planets`
+- Implemented synchronization logic for `planets_unknown` (replace strategy)
+
+### 🔍 Data validation & classification
+
+- Introduced ArcGIS-based validation rules:
+    - valid planet = has `Planet`, `X`, `Y`
+    - invalid planet = classified as "unknown"
+- Added skipped row classification with reasons:
+    - `missing_planet`
+    - `missing_x`
+    - `missing_y`
+
+### 📊 Dry-run improvements
+
+- Extended `--dry-run` output:
+    - total downloaded features
+    - validated payload count
+    - skipped planet summary
+    - detailed breakdown by reason
+    - preview of first skipped rows
+    - count of valid planets ready for import
+
+### 🔄 Import pipeline
+
+- Implemented full pipeline:
+    - download → validate → classify → map → persist
+- Transaction-based import for consistency
+- Database schema auto-initialization
+
+### 🧩 Provisioning layer
+
+- Added ArcGIS mapping utilities:
+    - `map_feature_to_planet`
+    - `collect_skipped_planets`
+    - `summarize_skipped_rows`
+- Centralized validation logic:
+    - `is_valid_planet`
+    - `is_unknown`
+
+### 🧱 Architecture
+
+- Introduced `db::planets` module:
+    - upsert logic
+    - unknown sync
+    - counters (`count_planets`, `count_unknown_planets`)
+- Strengthened separation between:
+    - provisioning (ArcGIS)
+    - domain mapping
+    - persistence layer
+
+### ⚠️ Current limitations
+
+- Unknown planet sync uses full replace strategy (not incremental)
+- No alias extraction (`name0`, `name1`, `name2`) yet
+- No search/index table (`planet_search`) yet
+- No differential update (always full import)
+
+### 🚧 Next steps
+
+- Implement alias extraction (`planet_aliases`)
+- Build search index (`planet_search`)
+- Optimize unknown sync (incremental)
+- Introduce differential update (hash-based)
+- Add progress reporting for large imports
+
+---
+
 ## [0.2.0] - 2026-03-23
 
 ### ✨ New — ArcGIS integration (bootstrap)
