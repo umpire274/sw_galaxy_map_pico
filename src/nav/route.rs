@@ -1,16 +1,18 @@
 //! Basic route calculation orchestration.
 
-use super::distance::euclidean_distance;
-use super::eta::estimate_eta_minutes;
+use super::distance::{euclidean_distance_raw, raw_distance_to_parsec};
+use super::eta::estimate_eta_seconds;
 use super::models::{RouteRequest, RouteSummary};
 
 /// Calculates a basic direct route summary.
 pub fn calculate_basic_route(request: &RouteRequest) -> RouteSummary {
-    let distance = euclidean_distance(&request.from, &request.to);
-    let eta_minutes = estimate_eta_minutes(distance, request.speed);
+    let raw_distance = euclidean_distance_raw(&request.from, &request.to);
+    let distance_parsec = raw_distance_to_parsec(raw_distance);
+    let eta_seconds = estimate_eta_seconds(distance_parsec, request.speed_profile);
 
     RouteSummary {
-        distance,
-        eta_minutes,
+        raw_distance,
+        distance_parsec,
+        eta_seconds,
     }
 }

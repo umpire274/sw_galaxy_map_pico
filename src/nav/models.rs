@@ -18,6 +18,17 @@ pub struct Planet {
     pub z: f64,
 }
 
+/// Navigation speed configuration.
+#[derive(Debug, Clone, Copy)]
+pub struct SpeedProfile {
+    /// Base travel speed expressed in parsecs per hour.
+    pub base_speed_parsec_per_hour: f64,
+    /// Hyperdrive class multiplier.
+    pub hyperdrive_class: f64,
+    /// Route-specific multiplier applied after class adjustment.
+    pub route_multiplier: f64,
+}
+
 /// Route request between two planets.
 #[derive(Debug, Clone)]
 pub struct RouteRequest {
@@ -25,15 +36,17 @@ pub struct RouteRequest {
     pub from: Planet,
     /// Destination planet.
     pub to: Planet,
-    /// Travel speed in arbitrary project units.
-    pub speed: f64,
+    /// Travel speed profile.
+    pub speed_profile: SpeedProfile,
 }
 
 /// Summary returned by the route engine.
 #[derive(Debug, Clone)]
 pub struct RouteSummary {
-    /// Distance between origin and destination.
-    pub distance: f64,
-    /// Estimated travel time in minutes.
-    pub eta_minutes: u64,
+    /// Raw distance in map coordinate units.
+    pub raw_distance: f64,
+    /// Total route distance in parsecs.
+    pub distance_parsec: f64,
+    /// Estimated travel time in seconds.
+    pub eta_seconds: u64,
 }

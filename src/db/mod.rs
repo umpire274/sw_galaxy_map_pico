@@ -3,6 +3,7 @@
 pub mod aliases;
 pub mod connection;
 pub mod history;
+pub mod mapper;
 pub mod planets;
 pub mod schema;
 

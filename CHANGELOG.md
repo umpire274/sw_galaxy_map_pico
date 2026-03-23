@@ -4,6 +4,80 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.5.0] - 2026-03-23
+
+### ✨ New — First route calculation workflow
+
+- Implemented the first complete route calculation flow in the interactive UI
+- Added support for:
+    - origin planet selection
+    - destination planet selection
+    - direct route calculation
+    - route result visualization
+
+### 🧭 Interactive route selection
+
+- Reused the existing search system to select route endpoints
+- Added dedicated planet selection flow for route calculation:
+    - single search result → automatic selection
+    - multiple search results → numeric selection
+- In route selection mode, planet details are no longer shown before selection
+- In view-only search mode, single-result queries open planet details directly
+
+### 🖥️ UI improvements
+
+- Improved menu integration:
+    - `Calculate route` is now active
+- Standardized interaction behavior:
+    - `ENTER` or `0` = back / exit depending on context
+- Improved search navigation flow:
+    - returning from planet detail restores search results
+    - search selection is now faster and more context-aware
+
+### 🧩 Application structure
+
+- Refactored search logic into a reusable internal selection flow
+- Added mapping helper from database models to navigation models:
+    - `convert_to_nav_planet`
+
+### 📏 Route calculation
+
+- Added direct route computation between two selected planets
+- Route result now includes:
+    - distance in parsecs
+    - ETA
+    - base speed
+    - hyperdrive class
+    - route multiplier
+    - effective speed
+
+### ⏱️ ETA improvements
+
+- Converted ETA formatting from raw minutes to:
+    - `dd hh mm ss`
+- Aligned ETA formula with desktop core assumptions using:
+    - base speed
+    - hyperdrive class
+    - route multiplier
+
+### ⚠️ Current limitations
+
+- Route calculation is still direct (point-to-point)
+- No obstacle avoidance or detour generation yet
+- No contextual route multiplier computation from real route conditions yet
+- No pathfinding through intermediate waypoints yet
+- No route persistence into history yet
+
+### 🚧 Next steps
+
+- Replicate desktop core route logic in Pico version
+- Introduce obstacle / proximity detection
+- Implement detour generation and waypoint insertion
+- Reproduce contextual speed / multiplier logic from regions and travel context
+- Persist calculated routes into history
+
+---
+
 ## [0.4.0] - 2026-03-23
 
 ### ✨ New — Search & interaction layer
