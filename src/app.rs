@@ -1,8 +1,8 @@
 //! Application state and orchestration.
 
 use crate::config::Cli;
-use crate::db::planets::{get_planet_details, search_planets};
 use crate::db::Database;
+use crate::db::planets::{get_planet_details, search_planets};
 use crate::ui;
 use anyhow::Result;
 
