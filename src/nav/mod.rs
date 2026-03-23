@@ -1,5 +1,6 @@
 //! Navigation engine modules.
 
+pub mod detour;
 pub mod distance;
 pub mod eta;
 pub mod geometry;

@@ -81,6 +81,35 @@ pub fn initialize_galaxy_schema(conn: &Connection) -> Result<()> {
 
         CREATE INDEX IF NOT EXISTS idx_planet_aliases_alias_norm
             ON planet_aliases(alias_norm);
+
+        CREATE TABLE IF NOT EXISTS waypoints (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            code            TEXT NOT NULL UNIQUE,
+            label           TEXT,
+            x               REAL NOT NULL,
+            y               REAL NOT NULL,
+            kind            TEXT NOT NULL DEFAULT 'user',
+            is_enabled      INTEGER NOT NULL DEFAULT 1
+        );
+
+        CREATE TABLE IF NOT EXISTS waypoint_planets (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            waypoint_id     INTEGER NOT NULL,
+            planet_fid      INTEGER NOT NULL,
+            role            TEXT NOT NULL,
+            distance        REAL,
+            UNIQUE(waypoint_id, planet_fid, role),
+            FOREIGN KEY (waypoint_id) REFERENCES waypoints(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_waypoint_planets_planet_fid
+            ON waypoint_planets(planet_fid);
+
+        CREATE INDEX IF NOT EXISTS idx_waypoint_planets_role
+            ON waypoint_planets(role);
+
+        CREATE INDEX IF NOT EXISTS idx_waypoints_enabled
+            ON waypoints(is_enabled);
         "#,
     )?;
 

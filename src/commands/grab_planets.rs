@@ -78,6 +78,8 @@ pub fn run(galaxy_db_path: &str, dry_run: bool) -> Result<()> {
 
     schema::initialize_galaxy_schema(&conn)?;
 
+    //crate::db::queries::seed_test_obstacle_link(&conn, 2633, 2.0)?;
+
     let tx = conn.transaction().context("Failed to start transaction")?;
 
     for record in &valid_planets {

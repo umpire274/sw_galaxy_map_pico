@@ -5,6 +5,7 @@ pub mod connection;
 pub mod history;
 pub mod mapper;
 pub mod planets;
+pub mod queries;
 pub mod schema;
 
 use anyhow::Result;

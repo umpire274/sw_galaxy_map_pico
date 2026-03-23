@@ -4,6 +4,98 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.5.5] - 2026-03-23
+
+### ✨ New — First applied reroute
+
+- Implemented the first applied reroute workflow in the Pico route engine
+- Direct routes are now converted into an effective detoured route when a valid waypoint is found
+- The final route now reports:
+    - final distance
+    - final ETA
+    - detour safety status
+
+### 🧭 Routing engine
+
+- Added support for applying a selected detour waypoint to the final route
+- Route engine now distinguishes between:
+    - direct route metrics
+    - final effective route metrics
+- Added detour safety verification across both route legs:
+    - `from -> waypoint`
+    - `waypoint -> to`
+
+### ⚠️ Collision & detour explain
+
+- Added structured collision explain output:
+    - obstacle name and ID
+    - obstacle center
+    - obstacle radius
+    - closest distance
+    - required clearance
+    - violation amount
+    - closest point
+    - segment factor `t`
+    - collision penalty
+
+- Added structured detour explain output:
+    - chosen side
+    - offset used
+    - total score
+    - base distance
+    - turn penalty
+    - back penalty
+    - proximity penalty
+
+### 🔍 Candidate analysis
+
+- Added full candidate evaluation output for each generated detour
+- Each candidate now reports:
+    - side
+    - offset
+    - validity
+    - score
+    - rejection reason (if invalid)
+    - score breakdown (if valid)
+
+### 📐 Scoring improvements
+
+- Introduced stronger detour scoring based on:
+    - base route distance
+    - turn penalty
+    - backtracking penalty
+    - residual proximity penalty
+
+- Added soft proximity comfort zone to discourage detours that remain too close to obstacles
+- Candidate selection is now based on score quality, not just shortest valid path
+
+### ✅ Validation milestone
+
+- Achieved parity with desktop core on:
+    - direct route distance
+    - ETA model
+    - first obstacle identification
+    - first collision metrics
+    - obstacle-centered detour generation
+
+### ⚠️ Current limitations
+
+- Only one detour waypoint is supported
+- No recursive reroute if the detoured path hits another obstacle
+- No multi-waypoint route building yet
+- No persistence of computed waypoints or detours yet
+- Scoring is closer to desktop logic but not yet fully identical
+
+### 🚧 Next steps
+
+- Add second collision check over the rerouted path
+- Support multiple detour waypoints
+- Introduce iterative route recomputation
+- Improve parity with desktop scoring and explanation model
+- Persist computed detours into routing tables
+
+---
+
 ## [0.5.1] - 2026-03-23
 
 ### ✨ New — Obstacle detection (Phase 3)
