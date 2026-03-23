@@ -4,6 +4,7 @@ use crate::nav::geometry::closest_point_on_segment;
 use crate::nav::models::{
     CollisionExplain, Obstacle, ObstacleCheck, Planet, Point2, RouteWaypoint,
 };
+use crate::nav::segment::build_segments;
 
 /// Default route clearance added to each obstacle radius.
 pub const DEFAULT_ROUTE_CLEARANCE: f64 = 0.2;
@@ -65,6 +66,39 @@ pub fn build_collision_explain(check: &ObstacleCheck) -> Option<CollisionExplain
         t: check.t,
         proximity_penalty,
     })
+}
+
+/// Finds the first collision across all segments of a path.
+pub fn first_collision_on_path(
+    path: &[Point2],
+    obstacles: &[Obstacle],
+    route_clearance: f64,
+) -> Option<(usize, ObstacleCheck)> {
+    let segments = build_segments(path);
+
+    for (index, seg) in segments.iter().enumerate() {
+        let from = Planet {
+            id: -1,
+            name: "seg_start".into(),
+            x: seg.start.x,
+            y: seg.start.y,
+            z: 0.0,
+        };
+
+        let to = Planet {
+            id: -1,
+            name: "seg_end".into(),
+            x: seg.end.x,
+            y: seg.end.y,
+            z: 0.0,
+        };
+
+        if let Some(hit) = first_collision_on_segment(&from, &to, obstacles, route_clearance) {
+            return Some((index, hit));
+        }
+    }
+
+    None
 }
 
 /// Returns the first collision encountered along the segment.
