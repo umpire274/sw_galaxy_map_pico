@@ -200,6 +200,8 @@ pub struct RouteSummary {
     pub detour_is_safe: bool,
     /// Whether the original direct route had a collision.
     pub direct_route_has_collision: bool,
+    /// Explain history for each routing iteration.
+    pub iterations: Vec<RouteIterationExplain>,
 }
 
 /// A full route path composed of multiple points.
@@ -216,4 +218,19 @@ impl From<&RouteWaypoint> for Point2 {
             y: value.y,
         }
     }
+}
+
+/// Explain data for one routing iteration.
+#[derive(Debug, Clone)]
+pub struct RouteIterationExplain {
+    /// Iteration index starting from 1.
+    pub iteration: usize,
+    /// Index of the segment that collided.
+    pub segment_index: usize,
+    /// Collision details for the segment.
+    pub collision: ObstacleCheck,
+    /// All candidates evaluated during this iteration.
+    pub candidates: Vec<DetourCandidate>,
+    /// Selected candidate, if any.
+    pub selected_candidate: Option<DetourCandidate>,
 }

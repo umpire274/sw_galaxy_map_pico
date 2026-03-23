@@ -3,7 +3,9 @@
 use super::detour::{compute_detour_distance_parsec, evaluate_detour_with_offset_growth};
 use super::distance::{euclidean_distance_raw, raw_distance_to_parsec};
 use super::eta::estimate_eta_seconds;
-use super::models::{Obstacle, Planet, Point2, RouteOptions, RouteRequest, RouteSummary};
+use super::models::{
+    Obstacle, Planet, Point2, RouteIterationExplain, RouteOptions, RouteRequest, RouteSummary,
+};
 use super::obstacle::{
     build_collision_explain, detour_route_is_safe, first_collision_on_path,
     first_collision_on_segment,
@@ -89,6 +91,7 @@ pub fn calculate_basic_route(request: &RouteRequest, obstacles: &[Obstacle]) -> 
         final_distance_parsec,
         final_eta_seconds,
         detour_is_safe,
+        iterations: Vec::new(),
     }
 }
 
@@ -131,6 +134,8 @@ pub fn calculate_iterative_route(request: &RouteRequest, obstacles: &[Obstacle])
     let mut all_candidates = Vec::new();
     let mut last_candidate = None;
 
+    let mut iterations_explain = Vec::new();
+
     loop {
         if iterations >= max_iters {
             break;
@@ -166,6 +171,14 @@ pub fn calculate_iterative_route(request: &RouteRequest, obstacles: &[Obstacle])
 
         let (candidates, best) =
             evaluate_detour_with_offset_growth(&from, &to, obstacle, &violation, options);
+
+        iterations_explain.push(RouteIterationExplain {
+            iteration: iterations + 1,
+            segment_index,
+            collision: violation.clone(),
+            candidates: candidates.clone(),
+            selected_candidate: best.clone(),
+        });
 
         all_candidates.extend(candidates);
 
@@ -231,5 +244,6 @@ pub fn calculate_iterative_route(request: &RouteRequest, obstacles: &[Obstacle])
         final_distance_parsec: total_distance_parsec,
         final_eta_seconds,
         detour_is_safe,
+        iterations: iterations_explain,
     }
 }

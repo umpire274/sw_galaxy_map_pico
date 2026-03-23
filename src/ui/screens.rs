@@ -211,4 +211,32 @@ pub fn show_route_result(from: &str, to: &str, route: &RouteSummary, speed: Spee
             }
         }
     }
+
+    if !route.iterations.is_empty() {
+        println!();
+        println!("Routing iterations:");
+        for step in &route.iterations {
+            println!(
+                "  Iteration {}: segment={} obstacle={} [{}] t={:.3}",
+                step.iteration,
+                step.segment_index,
+                step.collision.obstacle_name,
+                step.collision.obstacle_id,
+                step.collision.t
+            );
+
+            if let Some(selected) = &step.selected_candidate {
+                println!(
+                    "    selected     : side={} offset={:.3} score={:.6}",
+                    selected.side, selected.offset_used, selected.total_score
+                );
+            } else {
+                println!("    selected     : none");
+            }
+
+            println!("    candidates   : {}", step.candidates.len());
+        }
+    } else if route.iterations.is_empty() {
+        println!("Routing iterations: none");
+    }
 }
