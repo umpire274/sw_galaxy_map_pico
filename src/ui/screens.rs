@@ -1,7 +1,7 @@
 //! Textual screen helpers.
 
 use crate::db::planets::PlanetDetails;
-use crate::nav::eta::format_eta_dd_hh_mm_ss;
+use crate::nav::eta::{effective_speed_parsec_per_hour, format_eta_dd_hh_mm_ss};
 use crate::nav::models::{RouteSummary, SpeedProfile};
 
 /// Renders the application banner.
@@ -71,8 +71,7 @@ pub fn show_search_results_screen(results: &[(i64, String)]) {
 
 /// Renders the route calculation result.
 pub fn show_route_result(from: &str, to: &str, route: &RouteSummary, speed: SpeedProfile) {
-    let effective_speed =
-        (speed.base_speed_parsec_per_hour / speed.hyperdrive_class) * speed.route_multiplier;
+    let effective_speed = effective_speed_parsec_per_hour(speed);
 
     println!();
     println!("== Route result ==");
@@ -90,4 +89,23 @@ pub fn show_route_result(from: &str, to: &str, route: &RouteSummary, speed: Spee
     println!("Hyperdrive class : {:.2}", speed.hyperdrive_class);
     println!("Route multiplier : {:.3}", speed.route_multiplier);
     println!("Effective speed  : {:.2} pc/h", effective_speed);
+
+    match &route.closest_violation {
+        Some(v) => {
+            println!();
+            println!("Obstacle warning : YES");
+            println!("Closest obstacle : {} [{}]", v.obstacle_name, v.obstacle_id);
+            println!("Closest distance : {:.3} pc", v.closest_distance);
+            println!("Required minimum : {:.3} pc", v.required_clearance);
+            println!(
+                "Closest point    : ({:.3}, {:.3})",
+                v.closest_point.x, v.closest_point.y
+            );
+            println!("Segment factor t : {:.3}", v.t);
+        }
+        None => {
+            println!();
+            println!("Obstacle warning : NO");
+        }
+    }
 }

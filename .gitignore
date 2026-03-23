@@ -29,6 +29,11 @@ target/
 *.pdf
 *.txt
 
+*.docx
+*.xlsx
+*.pptx
+*.odt
+
 *.zip
 *.tar.gz
 *.rar
