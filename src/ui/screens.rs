@@ -1,6 +1,7 @@
 //! Textual screen helpers.
 
 use crate::db::planets::PlanetDetails;
+use crate::db::routes::{RecentRouteRow, SavedRouteDetails};
 use crate::nav::eta::{effective_speed_parsec_per_hour, format_eta_dd_hh_mm_ss};
 use crate::nav::models::{RouteSummary, SpeedProfile};
 
@@ -285,6 +286,84 @@ pub fn show_route_result(from: &str, to: &str, route: &RouteSummary, speed: Spee
 
         for (i, p) in route.final_path.iter().enumerate() {
             println!("  {:02}) ({:.3}, {:.3})", i, p.x, p.y);
+        }
+    }
+}
+
+/// Renders a list of recently saved routes.
+pub fn show_recent_routes(routes: &[RecentRouteRow]) {
+    println!();
+    println!("== Recent routes ==");
+
+    if routes.is_empty() {
+        println!("No saved routes found.");
+        return;
+    }
+
+    for route in routes {
+        println!(
+            "[{}] {} -> {} | {:.3} pc | ETA {} | safe={} | iters={} | {}",
+            route.id,
+            route.from_planet_name,
+            route.to_planet_name,
+            route.final_distance_pc,
+            format_eta_dd_hh_mm_ss(route.final_eta_seconds as u64),
+            route.final_is_safe,
+            route.total_iterations,
+            route.created_at_utc
+        );
+    }
+}
+
+/// Renders one saved route in detail.
+pub fn show_saved_route_details(route: &SavedRouteDetails) {
+    println!();
+    println!("== Saved route details ==");
+    println!("ID               : {}", route.id);
+    println!(
+        "From             : {} [{}]",
+        route.from_planet_name, route.from_planet_id
+    );
+    println!(
+        "To               : {} [{}]",
+        route.to_planet_name, route.to_planet_id
+    );
+    println!("Created at       : {}", route.created_at_utc);
+    println!("Direct distance  : {:.6} pc", route.direct_distance_pc);
+    println!("Final distance   : {:.6} pc", route.final_distance_pc);
+    println!(
+        "Direct ETA       : {}",
+        format_eta_dd_hh_mm_ss(route.direct_eta_seconds as u64)
+    );
+    println!(
+        "Final ETA        : {}",
+        format_eta_dd_hh_mm_ss(route.final_eta_seconds as u64)
+    );
+    println!(
+        "Direct route     : {}",
+        if route.direct_is_safe {
+            "safe"
+        } else {
+            "unsafe"
+        }
+    );
+    println!(
+        "Final route      : {}",
+        if route.final_is_safe {
+            "safe"
+        } else {
+            "unsafe"
+        }
+    );
+    println!("Total iterations : {}", route.total_iterations);
+
+    println!();
+    println!("Final path:");
+    if route.points.is_empty() {
+        println!("  none");
+    } else {
+        for point in &route.points {
+            println!("  {:02}) ({:.3}, {:.3})", point.seq_index, point.x, point.y);
         }
     }
 }

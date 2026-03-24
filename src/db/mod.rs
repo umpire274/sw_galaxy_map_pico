@@ -6,6 +6,7 @@ pub mod history;
 pub mod mapper;
 pub mod planets;
 pub mod queries;
+pub mod routes;
 pub mod schema;
 
 use anyhow::Result;
@@ -32,6 +33,7 @@ impl Database {
     /// Creates a new database facade and initializes writable schema.
     pub fn new(galaxy_db_path: &str, history_db_path: &str) -> Result<Self> {
         let connections = DatabaseConnections::open(galaxy_db_path, history_db_path)?;
+        schema::initialize_galaxy_schema(&connections.galaxy)?;
         schema::initialize_history_schema(&connections.history)?;
         Ok(Self { connections })
     }
@@ -39,6 +41,16 @@ impl Database {
     /// Returns the readonly galaxy database connection.
     pub fn galaxy_conn(&self) -> &rusqlite::Connection {
         &self.connections.galaxy
+    }
+
+    /// Returns a mutable reference to the history database connection.
+    pub fn history_conn_mut(&mut self) -> &mut rusqlite::Connection {
+        &mut self.connections.history
+    }
+
+    /// Returns an immutable reference to the history database connection.
+    pub fn history_conn(&self) -> &rusqlite::Connection {
+        &self.connections.history
     }
 
     /// Returns aggregate counts from both databases.

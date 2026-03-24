@@ -4,7 +4,67 @@ All notable changes to this project will be documented in this file.
 
 ---
 
-# Changelog
+## [0.8.0] - 2026-03-24
+
+### 🚀 Added
+
+* Route persistence in history database
+* Storage of computed routes as first-class entities
+* Storage of final path (multi-waypoint sequence)
+* Recent routes listing (interactive)
+* Route detail view with:
+
+    * origin/destination
+    * distances (direct and final)
+    * ETA (direct and final)
+    * safety flags
+    * iteration count
+    * full final path reconstruction
+
+### 🔧 Improved
+
+* Integration of routing engine with persistence layer
+* Clean separation between routing, database, and UI
+* User flow:
+
+    * calculate → save → browse → inspect
+* Improved usability of navigation menu (Recent routes now functional)
+
+### 🧠 Internal
+
+* Added `routes` table
+* Added `route_points` table
+* Introduced route persistence transaction logic
+* Added models:
+
+    * `RecentRouteRow`
+    * `SavedRouteDetails`
+    * `SavedRoutePoint`
+* Introduced database helpers:
+
+    * `save_route`
+    * `list_recent_routes`
+    * `get_route_details`
+
+### 📚 Documentation
+
+* Updated README to include route persistence capabilities
+* Updated ROADMAP with v0.8.0 milestone
+
+### 💡 Notes
+
+This release completes the transition from a pure routing engine to a **persistent navigation system**.
+
+Routes are now:
+
+* computed
+* stored
+* retrieved
+* inspected
+
+This enables future features such as favorites, replay, and advanced analysis.
+
+---
 
 ## [0.7.0] - 2026-03-24
 
@@ -46,8 +106,6 @@ All notable changes to this project will be documented in this file.
 
 * Updated README to reflect multi-waypoint routing engine
 * Updated ROADMAP with completed v0.7.0 milestone
-
----
 
 ### 💡 Notes
 
