@@ -115,6 +115,28 @@ pub fn show_route_result(from: &str, to: &str, route: &RouteSummary, speed: Spee
         }
     );
 
+    println!("Total iterations : {}", route.total_iterations);
+
+    print!("Final collision  :");
+    if let Some(final_collision) = &route.final_collision {
+        println!(
+            "  obstacle       : {} [{}]",
+            final_collision.obstacle_name, final_collision.obstacle_id
+        );
+        println!(
+            "  center         : ({:.3}, {:.3})",
+            final_collision.obstacle_x, final_collision.obstacle_y
+        );
+        println!("  closest dist   : {:.3}", final_collision.closest_distance);
+        println!(
+            "  required       : {:.3}",
+            final_collision.required_clearance
+        );
+        println!("  t              : {:.3}", final_collision.t);
+    } else {
+        println!(" none");
+    }
+
     if route.used_detour {
         println!("Final distance   : {:.6} pc", route.final_distance_parsec);
         println!(
@@ -166,7 +188,7 @@ pub fn show_route_result(from: &str, to: &str, route: &RouteSummary, speed: Spee
     match &route.detour_candidate {
         Some(candidate) => {
             println!();
-            println!("Selected detour:");
+            println!("Last selected detour:");
             println!(
                 "  waypoint       : ({:.3}, {:.3})",
                 candidate.waypoint.x, candidate.waypoint.y
@@ -185,58 +207,84 @@ pub fn show_route_result(from: &str, to: &str, route: &RouteSummary, speed: Spee
         }
     }
 
-    if !route.detour_candidates.is_empty() {
+    if route.iterations.is_empty() {
         println!();
-        println!("Detour candidates:");
-        for (index, candidate) in route.detour_candidates.iter().enumerate() {
-            println!(
-                "  {:02}) side={} offset={:.3} valid={} score={:.6}",
-                index + 1,
-                candidate.side,
-                candidate.offset_used,
-                candidate.is_valid,
-                candidate.total_score
-            );
+        println!("Routing iterations: none");
+    } else {
+        println!();
+        println!("Routing iterations:");
 
-            if let Some(reason) = &candidate.rejection_reason {
-                println!("      reason      : {reason}");
+        for step in &route.iterations {
+            println!("  Iteration {}:", step.iteration);
+            println!("    segment       : {}", step.segment_index);
+            println!(
+                "    obstacle      : {} [{}]",
+                step.collision.obstacle_name, step.collision.obstacle_id
+            );
+            println!(
+                "    center        : ({:.3}, {:.3})",
+                step.collision.obstacle_x, step.collision.obstacle_y
+            );
+            println!("    closest dist  : {:.3}", step.collision.closest_distance);
+            println!(
+                "    required      : {:.3}",
+                step.collision.required_clearance
+            );
+            println!("    t             : {:.3}", step.collision.t);
+
+            match &step.selected_candidate {
+                Some(selected) => {
+                    println!(
+                        "    selected      : side={} offset={:.3} score={:.6}",
+                        selected.side, selected.offset_used, selected.total_score
+                    );
+                    println!(
+                        "                    waypoint=({:.3}, {:.3})",
+                        selected.waypoint.x, selected.waypoint.y
+                    );
+                }
+                None => {
+                    println!("    selected      : none");
+                }
+            }
+
+            if step.candidates.is_empty() {
+                println!("    candidates    : none");
             } else {
-                println!(
-                    "      breakdown   : base={:.6} turn={:.6} back={:.6} prox={:.6}",
-                    candidate.base_distance,
-                    candidate.turn_penalty,
-                    candidate.back_penalty,
-                    candidate.proximity_penalty
-                );
+                println!("    candidates:");
+
+                for (index, candidate) in step.candidates.iter().enumerate() {
+                    println!(
+                        "      {:02}) side={} offset={:.3} valid={} score={:.6}",
+                        index + 1,
+                        candidate.side,
+                        candidate.offset_used,
+                        candidate.is_valid,
+                        candidate.total_score
+                    );
+
+                    if let Some(reason) = &candidate.rejection_reason {
+                        println!("          reason  : {reason}");
+                    } else {
+                        println!(
+                            "          breakdown: base={:.6} turn={:.6} back={:.6} prox={:.6}",
+                            candidate.base_distance,
+                            candidate.turn_penalty,
+                            candidate.back_penalty,
+                            candidate.proximity_penalty
+                        );
+                    }
+                }
             }
         }
     }
 
-    if !route.iterations.is_empty() {
+    if !route.final_path.is_empty() {
         println!();
-        println!("Routing iterations:");
-        for step in &route.iterations {
-            println!(
-                "  Iteration {}: segment={} obstacle={} [{}] t={:.3}",
-                step.iteration,
-                step.segment_index,
-                step.collision.obstacle_name,
-                step.collision.obstacle_id,
-                step.collision.t
-            );
+        println!("Final path:");
 
-            if let Some(selected) = &step.selected_candidate {
-                println!(
-                    "    selected     : side={} offset={:.3} score={:.6}",
-                    selected.side, selected.offset_used, selected.total_score
-                );
-            } else {
-                println!("    selected     : none");
-            }
-
-            println!("    candidates   : {}", step.candidates.len());
+        for (i, p) in route.final_path.iter().enumerate() {
+            println!("  {:02}) ({:.3}, {:.3})", i, p.x, p.y);
         }
-    } else if route.iterations.is_empty() {
-        println!("Routing iterations: none");
     }
 }

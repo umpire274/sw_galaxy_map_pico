@@ -78,3 +78,36 @@ pub fn list_routing_obstacles_in_bbox(
 
     Ok(obstacles)
 }
+
+/// Inserts a minimal routing waypoint and links multiple obstacle planets to it.
+///
+/// This helper is intended only for bootstrap/testing until full parity with
+/// the desktop-core waypoint workflow is implemented.
+#[allow(dead_code)]
+pub fn seed_test_obstacle_links(conn: &Connection, planet_fids: &[i64], radius: f64) -> Result<()> {
+    conn.execute(
+        r#"
+        INSERT OR IGNORE INTO waypoints (code, label, x, y, kind, is_enabled)
+        VALUES ('seed-obstacle', 'Seed Obstacle Waypoint', 0.0, 0.0, 'seed', 1)
+        "#,
+        [],
+    )?;
+
+    let waypoint_id: i64 = conn.query_row(
+        "SELECT id FROM waypoints WHERE code = 'seed-obstacle' LIMIT 1",
+        [],
+        |row| row.get(0),
+    )?;
+
+    for planet_fid in planet_fids {
+        conn.execute(
+            r#"
+            INSERT OR IGNORE INTO waypoint_planets (waypoint_id, planet_fid, role, distance)
+            VALUES (?1, ?2, 'avoid', ?3)
+            "#,
+            rusqlite::params![waypoint_id, planet_fid, radius],
+        )?;
+    }
+
+    Ok(())
+}

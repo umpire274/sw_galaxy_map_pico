@@ -14,41 +14,47 @@ It is a dedicated implementation designed around the constraints and UX of small
 * interactive selection of origin and destination
 * route calculation with:
 
-  * distance (parsec)
-  * ETA (based on speed profile)
+    * distance (parsec)
+    * ETA (based on speed profile)
 * obstacle detection along route
 * automatic detour generation
-* iterative routing engine (multi-step ready)
+* **multi-waypoint iterative routing engine**
 * detailed route explain:
 
-  * direct vs final route
-  * collision analysis
-  * detour selection
-  * candidate evaluation
-  * routing iterations
+    * direct vs final route
+    * collision analysis
+    * detour selection
+    * candidate evaluation (per iteration)
+    * routing iterations (multi-step)
+    * final path output
 
 ---
 
 ## 🧭 Routing engine
 
-The current engine (v0.6.x) supports:
+The current engine (v0.7.0) supports:
 
 * direct route analysis
-* obstacle collision detection
+* obstacle collision detection (segment-based)
 * detour candidate generation
+* scoring system (distance + penalties)
 * waypoint insertion into route path
+* **multi-step iterative routing**
+* collision detection on expanded path
 * final route recomputation
 * safety validation of rerouted path
-* iteration-based routing explain
+* structured explain per iteration
 
 Example output includes:
 
 * direct route status (safe / unsafe)
 * final route status (safe / unsafe)
+* total iterations
+* final collision (if any)
 * collision explain
-* selected detour
-* full candidate list
-* routing iterations summary
+* last selected detour
+* routing iterations (grouped)
+* final path (multi-waypoint)
 
 ---
 
@@ -65,19 +71,24 @@ Example output includes:
 
 Active development.
 
-Current milestone: **v0.6.1 — iterative routing explain**
+Current milestone: **v0.7.0 — multi-waypoint iterative routing**
 
-The project has transitioned from a basic route calculator to a **first iterative routing engine**.
+The project has evolved into a **true iterative routing engine**, capable of:
+
+* handling multiple collisions along a route
+* inserting multiple waypoints dynamically
+* recomputing and validating the full path
+* providing a structured explain of each routing step
 
 ---
 
 ## 🚧 Next steps
 
-* multi-waypoint routing (true iterative expansion)
-* dynamic obstacle loading (beyond initial bbox)
-* improved explain (per-iteration detail expansion)
-* route persistence
-* improved UX for small displays
+* improve explain clarity and compactness for small displays
+* refine scoring model (closer to desktop core)
+* improve performance for large obstacle sets
+* route persistence (save/load)
+* enhanced debugging tools for routing
 
 ---
 
@@ -95,3 +106,5 @@ The project has transitioned from a basic route calculator to a **first iterativ
 This project is designed with **clarity, debuggability, and deterministic routing behavior** as primary goals.
 
 The routing engine is intentionally built step-by-step to mirror and eventually approach the behavior of the desktop `sw_galaxy_map` core.
+
+The v0.7.0 milestone marks the transition from a **single-detour system** to a **true iterative multi-waypoint router**.

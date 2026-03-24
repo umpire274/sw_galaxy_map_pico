@@ -72,29 +72,36 @@
 
 ---
 
-## v0.6.x (next)
+## v0.6.2
 
-* [ ] group candidates per iteration in UI
-* [ ] per-iteration detailed explain (breakdown + decision reasoning)
-* [ ] dynamic obstacle loading after path expansion
-* [ ] path debug visualization (textual)
-
----
-
-## v0.7.0 (planned)
-
-* [ ] true multi-waypoint routing
-* [ ] multiple collision handling across expanded path
-* [ ] iterative refinement loop (core-like behavior)
-* [ ] improved scoring parity with desktop core
+* [x] dynamic obstacle loading based on route bounding box
+* [x] integration of obstacle queries into routing flow
+* [x] improved consistency between routing and database layer
 
 ---
 
-## v0.8.0 (future)
+## v0.7.0
 
+* [x] true multi-waypoint routing
+* [x] multiple collision handling across expanded path
+* [x] iterative refinement loop (multi-step routing)
+* [x] collision detection on updated path segments
+* [x] insertion of multiple waypoints
+* [x] grouped candidate evaluation per iteration
+* [x] final path generation (explicit waypoint sequence)
+* [x] final collision detection (post-routing validation)
+* [x] total iteration tracking
+* [x] improved routing explain structure
+
+---
+
+## v0.8.0 (next)
+
+* [ ] explain optimization for compact displays
+* [ ] scoring refinement (closer to desktop core)
+* [ ] performance improvements for large datasets
 * [ ] route persistence (save/load)
 * [ ] route history navigation
-* [ ] favorites system
 
 ---
 

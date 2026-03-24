@@ -4,6 +4,60 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+# Changelog
+
+## [0.7.0] - 2026-03-24
+
+### 🚀 Added
+
+* True multi-waypoint routing
+* Iterative routing loop with multiple collision handling
+* Dynamic insertion of multiple waypoints along the path
+* Final path generation as explicit sequence of points
+* Total iteration tracking in route summary
+* Final collision detection after routing
+
+### 🔧 Improved
+
+* Routing engine upgraded from single-detour to iterative multi-step routing
+* Collision detection extended to full path (not only direct route)
+* Candidate evaluation grouped per iteration
+* Routing explain restructured and improved readability
+* Output clarity:
+
+    * direct vs final route
+    * total iterations
+    * final collision (explicit)
+    * last selected detour
+    * final path visualization
+
+### 🧠 Internal
+
+* Refactored routing flow to operate on dynamic path segments
+* Improved separation between routing engine, database and UI layers
+* Enhanced RouteSummary model with:
+
+    * final_path
+    * total_iterations
+    * final_collision
+* Prepared groundwork for future parity with desktop core
+
+### 📚 Documentation
+
+* Updated README to reflect multi-waypoint routing engine
+* Updated ROADMAP with completed v0.7.0 milestone
+
+---
+
+### 💡 Notes
+
+This release marks a major milestone:
+
+The routing engine transitions from a **single-detour system** to a **true iterative multi-waypoint router**, capable of
+handling multiple obstacles along the route and dynamically refining the path until a safe solution is found.
+
+---
+
 ## [0.6.2] - 2026-03-23
 
 ### ✨ New — Dynamic obstacle loading

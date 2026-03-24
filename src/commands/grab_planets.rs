@@ -6,6 +6,8 @@ use rusqlite::Connection;
 use std::time::Duration;
 
 use crate::db::planets::{insert_aliases, replace_unknown_planets, upsert_planet};
+#[allow(unused_imports)]
+use crate::db::queries::seed_test_obstacle_links;
 use crate::db::schema;
 use crate::net::connectivity::ensure_arcgis_reachable;
 use crate::provision::arcgis::{
@@ -78,7 +80,8 @@ pub fn run(galaxy_db_path: &str, dry_run: bool) -> Result<()> {
 
     schema::initialize_galaxy_schema(&conn)?;
 
-    //crate::db::queries::seed_test_obstacle_link(&conn, 2633, 2.0)?;
+    //seed_test_obstacle_link(&conn, 2633, 2.0)?;
+    //seed_test_obstacle_links(&conn, &[2633, 102], 10.0)?;
 
     let tx = conn.transaction().context("Failed to start transaction")?;
 
