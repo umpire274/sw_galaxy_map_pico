@@ -202,6 +202,12 @@ pub struct RouteSummary {
     pub direct_route_has_collision: bool,
     /// Explain history for each routing iteration.
     pub iterations: Vec<RouteIterationExplain>,
+    /// Final computed path (including inserted waypoints).
+    pub final_path: Vec<Point2>,
+    /// Total number of iterations executed by the router.
+    pub total_iterations: usize,
+    /// Final collision still present after routing, if any.
+    pub final_collision: Option<ObstacleCheck>,
 }
 
 /// A full route path composed of multiple points.

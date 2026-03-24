@@ -77,6 +77,17 @@ pub fn calculate_basic_route(request: &RouteRequest, obstacles: &[Obstacle]) -> 
             )
         };
 
+    let final_path = vec![
+        Point2 {
+            x: request.from.x,
+            y: request.from.y,
+        },
+        Point2 {
+            x: request.to.x,
+            y: request.to.y,
+        },
+    ];
+
     RouteSummary {
         raw_distance,
         distance_parsec,
@@ -92,6 +103,9 @@ pub fn calculate_basic_route(request: &RouteRequest, obstacles: &[Obstacle]) -> 
         final_eta_seconds,
         detour_is_safe,
         iterations: Vec::new(),
+        final_path,
+        total_iterations: 0,
+        final_collision: None,
     }
 }
 
@@ -246,7 +260,9 @@ where
     let final_new_obstacles = load_obstacles(final_min_x, final_max_x, final_min_y, final_max_y);
     crate::nav::obstacle::merge_obstacles(&mut obstacles, final_new_obstacles);
 
-    let final_collision = first_collision_on_path(&path, &obstacles, options.clearance);
+    let final_collision = first_collision_on_path(&path, &obstacles, options.clearance)
+        .map(|(_, collision)| collision);
+
     let detour_is_safe = final_collision.is_none();
 
     let detour_waypoint = last_candidate.as_ref().map(|c| c.waypoint.clone());
@@ -266,5 +282,8 @@ where
         final_eta_seconds,
         detour_is_safe,
         iterations: iterations_explain,
+        final_path: path.clone(),
+        total_iterations: iterations,
+        final_collision,
     }
 }
