@@ -4,6 +4,60 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.6.2] - 2026-03-23
+
+### ✨ New — Dynamic obstacle loading
+
+- Introduced dynamic obstacle loading during iterative routing
+- Obstacles are now reloaded at each iteration based on the current path bounding box
+- Ensures that newly introduced path segments are validated against all relevant obstacles
+
+### 🧭 Routing engine improvements
+
+- Routing engine now operates on a dynamically updated obstacle set
+- Added bounding box computation for full route path
+- Improved correctness of collision detection on expanded paths
+
+### 🧩 Architecture
+
+- Replaced static obstacle list with loader-based approach:
+    - `calculate_iterative_route` now accepts a closure for obstacle retrieval
+- Introduced obstacle merging to avoid duplicates across iterations
+- Improved separation of responsibilities:
+    - app layer → provides loader
+    - routing layer → controls when to load obstacles
+
+### 🔍 Collision handling
+
+- Collision detection now reflects the actual current path, not just the initial direct segment
+- Final route validation uses the full dynamically loaded obstacle set
+
+### 📐 Internal utilities
+
+- Added `path_bbox` helper for computing bounding boxes of multi-point paths
+- Added `merge_obstacles` helper to deduplicate obstacle lists
+
+### ✅ Validation milestone
+
+- Confirmed that existing routes (e.g. Coruscant → Naboo) remain stable
+- Verified that routing results are unchanged when no new obstacles are introduced
+- Validated that the routing engine is now ready for multi-waypoint scenarios
+
+### ⚠️ Current limitations
+
+- Dynamic loading does not yet adjust search radius beyond bounding box expansion
+- Candidate grouping is still global (not per iteration)
+- No persistence of loaded obstacle sets or route snapshots
+
+### 🚧 Next steps
+
+- Group detour candidates by iteration in output
+- Improve iteration explain with per-step candidate breakdown
+- Support multiple waypoint insertions in complex routes
+- Expand obstacle loading strategy beyond simple bounding box
+
+---
+
 ## [0.6.1] - 2026-03-23
 
 ### ✨ New — Routing iteration explain
