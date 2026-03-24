@@ -7,8 +7,7 @@ use crate::db::Database;
 use crate::db::mapper::convert_to_nav_planet;
 use crate::db::planets::{PlanetDetails, get_planet_details, search_planets};
 use crate::db::queries::{ObstacleQueryBounds, list_routing_obstacles_in_bbox};
-use crate::nav::geometry::segment_bbox;
-use crate::nav::models::{Point2, RouteRequest, SpeedProfile};
+use crate::nav::models::{RouteRequest, SpeedProfile};
 use crate::nav::route::calculate_iterative_route;
 use crate::ui;
 
@@ -96,39 +95,27 @@ impl App {
         };
 
         let request = RouteRequest {
-            from: from_nav.clone(),
-            to: to_nav.clone(),
+            from: from_nav,
+            to: to_nav,
             speed_profile,
         };
 
-        let from_point = Point2 {
-            x: from_nav.x,
-            y: from_nav.y,
+        let conn = self.db.galaxy_conn();
+        let from_id = from.remote_id;
+        let to_id = to.remote_id;
+
+        let mut loader = |min_x: f64, max_x: f64, min_y: f64, max_y: f64| {
+            let bounds = ObstacleQueryBounds {
+                min_x,
+                max_x,
+                min_y,
+                max_y,
+            };
+
+            list_routing_obstacles_in_bbox(conn, bounds, from_id, to_id, 2.0).unwrap_or_default()
         };
 
-        let to_point = Point2 {
-            x: to_nav.x,
-            y: to_nav.y,
-        };
-
-        let (min_x, max_x, min_y, max_y) = segment_bbox(from_point, to_point);
-
-        let bounds = ObstacleQueryBounds {
-            min_x,
-            max_x,
-            min_y,
-            max_y,
-        };
-
-        let obstacles = list_routing_obstacles_in_bbox(
-            self.db.galaxy_conn(),
-            bounds,
-            from.remote_id,
-            to.remote_id,
-            2.0,
-        )?;
-
-        let route = calculate_iterative_route(&request, &obstacles);
+        let route = calculate_iterative_route(&request, &mut loader);
 
         ui::show_route_result(&from.name, &to.name, &route, speed_profile);
         ui::prompt_go_back()?;

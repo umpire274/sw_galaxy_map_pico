@@ -102,7 +102,10 @@ pub fn calculate_basic_route(request: &RouteRequest, obstacles: &[Obstacle]) -> 
 /// - detects the first collision on the current path
 /// - inserts one detour waypoint on the colliding segment
 /// - repeats up to a fixed iteration limit
-pub fn calculate_iterative_route(request: &RouteRequest, obstacles: &[Obstacle]) -> RouteSummary {
+pub fn calculate_iterative_route<F>(request: &RouteRequest, mut load_obstacles: F) -> RouteSummary
+where
+    F: FnMut(f64, f64, f64, f64) -> Vec<Obstacle>,
+{
     let options = RouteOptions::default();
 
     // Direct-route metrics (always preserved in the summary).
@@ -110,8 +113,16 @@ pub fn calculate_iterative_route(request: &RouteRequest, obstacles: &[Obstacle])
     let distance_parsec = raw_distance_to_parsec(raw_distance);
     let eta_seconds = estimate_eta_seconds(distance_parsec, request.speed_profile);
 
+    // Initial direct-route obstacle set.
+    let mut obstacles = load_obstacles(
+        request.from.x.min(request.to.x),
+        request.from.x.max(request.to.x),
+        request.from.y.min(request.to.y),
+        request.from.y.max(request.to.y),
+    );
+
     let closest_violation =
-        first_collision_on_segment(&request.from, &request.to, obstacles, options.clearance);
+        first_collision_on_segment(&request.from, &request.to, &obstacles, options.clearance);
 
     let direct_route_has_collision = closest_violation.is_some();
     let collision_explain = closest_violation.as_ref().and_then(build_collision_explain);
@@ -133,7 +144,6 @@ pub fn calculate_iterative_route(request: &RouteRequest, obstacles: &[Obstacle])
 
     let mut all_candidates = Vec::new();
     let mut last_candidate = None;
-
     let mut iterations_explain = Vec::new();
 
     loop {
@@ -141,7 +151,12 @@ pub fn calculate_iterative_route(request: &RouteRequest, obstacles: &[Obstacle])
             break;
         }
 
-        let collision = first_collision_on_path(&path, obstacles, options.clearance);
+        // Reload obstacles dynamically using the current path bounding box.
+        let (min_x, max_x, min_y, max_y) = crate::nav::segment::path_bbox(&path);
+        let new_obstacles = load_obstacles(min_x, max_x, min_y, max_y);
+        crate::nav::obstacle::merge_obstacles(&mut obstacles, new_obstacles);
+
+        let collision = first_collision_on_path(&path, &obstacles, options.clearance);
 
         let Some((segment_index, violation)) = collision else {
             break;
@@ -225,7 +240,13 @@ pub fn calculate_iterative_route(request: &RouteRequest, obstacles: &[Obstacle])
 
     let final_eta_seconds = estimate_eta_seconds(total_distance_parsec, request.speed_profile);
 
-    let final_collision = first_collision_on_path(&path, obstacles, options.clearance);
+    // Final safety check on the fully expanded path.
+    let (final_min_x, final_max_x, final_min_y, final_max_y) =
+        crate::nav::segment::path_bbox(&path);
+    let final_new_obstacles = load_obstacles(final_min_x, final_max_x, final_min_y, final_max_y);
+    crate::nav::obstacle::merge_obstacles(&mut obstacles, final_new_obstacles);
+
+    let final_collision = first_collision_on_path(&path, &obstacles, options.clearance);
     let detour_is_safe = final_collision.is_none();
 
     let detour_waypoint = last_candidate.as_ref().map(|c| c.waypoint.clone());

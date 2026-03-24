@@ -5,6 +5,7 @@ use crate::nav::models::{
     CollisionExplain, Obstacle, ObstacleCheck, Planet, Point2, RouteWaypoint,
 };
 use crate::nav::segment::build_segments;
+use std::collections::HashSet;
 
 /// Default route clearance added to each obstacle radius.
 pub const DEFAULT_ROUTE_CLEARANCE: f64 = 0.2;
@@ -193,4 +194,14 @@ pub fn detour_route_is_safe(
 
     segment_is_safe(from, &wp_planet, obstacles, route_clearance)
         && segment_is_safe(&wp_planet, to, obstacles, route_clearance)
+}
+
+pub fn merge_obstacles(existing: &mut Vec<Obstacle>, new: Vec<Obstacle>) {
+    let mut seen: HashSet<i64> = existing.iter().map(|o| o.id).collect();
+
+    for obs in new {
+        if seen.insert(obs.id) {
+            existing.push(obs);
+        }
+    }
 }
