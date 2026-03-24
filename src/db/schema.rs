@@ -5,6 +5,8 @@ use rusqlite::Connection;
 
 /// Initializes the writable history schema if it does not already exist.
 pub fn initialize_history_schema(conn: &Connection) -> Result<()> {
+    eprintln!("Initializing history database schema if not already present...");
+
     conn.execute_batch(
         r#"
         CREATE TABLE IF NOT EXISTS route_history (
@@ -18,11 +20,46 @@ pub fn initialize_history_schema(conn: &Connection) -> Result<()> {
         "#,
     )?;
 
+    conn.execute_batch(
+        r#"
+        CREATE TABLE IF NOT EXISTS routes (
+            id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+            from_planet_id      INTEGER NOT NULL,
+            from_planet_name    TEXT NOT NULL,
+            to_planet_id        INTEGER NOT NULL,
+            to_planet_name      TEXT NOT NULL,
+            direct_distance_pc  REAL NOT NULL,
+            final_distance_pc   REAL NOT NULL,
+            direct_eta_seconds  INTEGER NOT NULL,
+            final_eta_seconds   INTEGER NOT NULL,
+            direct_is_safe      INTEGER NOT NULL,
+            final_is_safe       INTEGER NOT NULL,
+            total_iterations    INTEGER NOT NULL,
+            created_at_utc      TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS route_points (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            route_id    INTEGER NOT NULL,
+            seq_index   INTEGER NOT NULL,
+            x           REAL NOT NULL,
+            y           REAL NOT NULL,
+            FOREIGN KEY (route_id) REFERENCES routes(id) ON DELETE CASCADE
+        );
+
+        CREATE INDEX IF NOT EXISTS idx_route_points_route_id_seq
+            ON route_points(route_id, seq_index);
+        "#,
+    )?;
+
+    eprintln!("Initialization done.");
     Ok(())
 }
 
 /// Initializes the galaxy catalog schema if it does not already exist.
 pub fn initialize_galaxy_schema(conn: &Connection) -> Result<()> {
+    eprintln!("Initializing galaxy database schema if not already present...");
+
     conn.execute_batch(
         r#"
         CREATE TABLE IF NOT EXISTS planets (
@@ -113,5 +150,6 @@ pub fn initialize_galaxy_schema(conn: &Connection) -> Result<()> {
         "#,
     )?;
 
+    eprintln!("Initialization done.");
     Ok(())
 }

@@ -7,6 +7,7 @@ use crate::db::Database;
 use crate::db::mapper::convert_to_nav_planet;
 use crate::db::planets::{PlanetDetails, get_planet_details, search_planets};
 use crate::db::queries::{ObstacleQueryBounds, list_routing_obstacles_in_bbox};
+use crate::db::routes::{get_route_details, list_recent_routes};
 use crate::nav::models::{RouteRequest, SpeedProfile};
 use crate::nav::route::calculate_iterative_route;
 use crate::ui;
@@ -47,7 +48,7 @@ impl App {
             match choice.as_str() {
                 "1" => self.handle_search_planet()?,
                 "2" => self.handle_calculate_route()?,
-                "3" => self.show_not_implemented("Recent routes"),
+                "3" => self.handle_recent_routes()?,
                 "4" => self.show_not_implemented("Favorites"),
                 "5" => self.show_database_info()?,
                 "6" => self.show_not_implemented("Settings"),
@@ -72,7 +73,7 @@ impl App {
     }
 
     /// Handles the route calculation flow.
-    fn handle_calculate_route(&self) -> Result<()> {
+    fn handle_calculate_route(&mut self) -> Result<()> {
         ui::show_section_title("Calculate route");
 
         let from = match self.select_planet("Select origin")? {
@@ -117,10 +118,64 @@ impl App {
 
         let route = calculate_iterative_route(&request, &mut loader);
 
+        let created_at_utc = crate::utils::time::now_utc_iso();
+
+        let route_id = crate::db::routes::save_route(
+            self.db.history_conn_mut(),
+            from.remote_id,
+            &from.name,
+            to.remote_id,
+            &to.name,
+            &route,
+            &created_at_utc,
+        )?;
+
         ui::show_route_result(&from.name, &to.name, &route, speed_profile);
+
+        println!();
+        println!("Route saved successfully. ID: {}", route_id);
+
         ui::prompt_go_back()?;
 
         Ok(())
+    }
+
+    /// Displays recently saved routes and allows opening one route detail.
+    fn handle_recent_routes(&self) -> Result<()> {
+        loop {
+            ui::show_section_title("Recent routes");
+
+            let routes = list_recent_routes(self.db.history_conn(), 20)?;
+            ui::show_recent_routes(&routes);
+
+            let input = ui::prompt_line("\nEnter route ID to open (ENTER or 0 to go back): ")?;
+
+            if ui::is_back_input(&input) {
+                return Ok(());
+            }
+
+            let route_id: i64 = match input.parse() {
+                Ok(v) => v,
+                Err(_) => {
+                    println!("Invalid route ID.");
+                    ui::prompt_go_back()?;
+                    continue;
+                }
+            };
+
+            let details = get_route_details(self.db.history_conn(), route_id)?;
+
+            match details {
+                Some(route) => {
+                    ui::show_saved_route_details(&route);
+                    ui::prompt_go_back()?;
+                }
+                None => {
+                    println!("Route not found.");
+                    ui::prompt_go_back()?;
+                }
+            }
+        }
     }
 
     /// Displays current database counters.
