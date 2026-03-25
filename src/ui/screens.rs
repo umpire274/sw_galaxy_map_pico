@@ -3,6 +3,7 @@
 use crate::db::planets::PlanetDetails;
 use crate::db::route_explain::SavedRouteExplain;
 use crate::db::routes::{RecentRouteRow, SavedRouteDetails};
+use crate::db::status::DatabaseStatus;
 use crate::nav::eta::{effective_speed_parsec_per_hour, format_eta_dd_hh_mm_ss};
 use crate::nav::models::{RouteSummary, SpeedProfile};
 
@@ -600,5 +601,60 @@ pub fn show_saved_route_explain(explain: &SavedRouteExplain) {
         for (index, point) in explain.final_path.iter().enumerate() {
             println!("  {:02}) ({:.3}, {:.3})", index, point.x, point.y);
         }
+    }
+}
+
+pub fn show_database_status(status: &DatabaseStatus) {
+    println!("== Database status ==");
+
+    println!("✅ Status: OK");
+    println!("ℹ️ Database path: {}", status.db_path);
+    println!("ℹ️ Database size: {} bytes", status.db_size_bytes);
+
+    println!();
+    println!("Meta:");
+    for (k, v) in &status.meta {
+        println!("  {k}: {v}");
+    }
+
+    println!();
+    println!("Counts:");
+    println!("  planets: {}", status.counts.planets);
+
+    match status.counts.active_planets {
+        Some(v) => println!("  active_planets: {v}"),
+        None => println!("  active_planets: n/a"),
+    }
+
+    match status.counts.deleted_planets {
+        Some(v) => println!("  deleted_planets: {v}"),
+        None => println!("  deleted_planets: n/a"),
+    }
+
+    match status.counts.planets_unknown {
+        Some(v) => println!("  planets_unknown: {v}"),
+        None => println!("  planets_unknown: n/a"),
+    }
+
+    match status.counts.planet_aliases {
+        Some(v) => println!("  planet_aliases: {v}"),
+        None => println!("  planet_aliases: n/a"),
+    }
+
+    match status.counts.planet_search {
+        Some(v) => println!("  planet_search: {v}"),
+        None => println!("  planet_search: n/a"),
+    }
+
+    println!();
+    println!("Schema:");
+    for (name, present) in &status.schema_objects {
+        println!("  {name}: {}", if *present { "present" } else { "missing" });
+    }
+
+    println!();
+    println!("FTS:");
+    for (k, v) in &status.fts_info {
+        println!("  {k}: {v}");
     }
 }
