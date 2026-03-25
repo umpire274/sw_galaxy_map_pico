@@ -1,4 +1,10 @@
-# sw_galaxy_map_pico
+# SW Galaxy Map for Pico
+
+[![GitHub release](https://img.shields.io/github/v/release/umpire274/sw_galaxy_map_pico?include_prereleases)](https://github.com/umpire274/sw_galaxy_map_pico/releases)
+[![CI](https://img.shields.io/github/actions/workflow/status/umpire274/sw_galaxy_map_pico/ci.yml?branch=main)](https://github.com/umpire274/sw_galaxy_map_pico/actions)
+[![License](https://img.shields.io/github/license/umpire274/sw_galaxy_map_pico)](LICENSE)
+[![Rust](https://img.shields.io/badge/Rust-1.75%2B-orange)](https://www.rust-lang.org/)
+[![Crates.io](https://img.shields.io/crates/v/sw_galaxy_map_pico)](https://crates.io/crates/sw_galaxy_map_pico)
 
 `sw_galaxy_map_pico` is a Pico-oriented offline navicomputer project for Star Wars galaxy routing.
 
