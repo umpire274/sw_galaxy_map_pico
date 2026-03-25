@@ -4,6 +4,45 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.9.1] - 2026-03-25
+
+### ✨ Improvements
+
+- Introduced **Database status screen** (menu 5):
+    - database path and size
+    - meta information (app version, install time, last start)
+    - dataset counts (schema-aware, safe on missing tables/columns)
+    - schema inspection (views/tables presence)
+    - FTS diagnostics
+
+### 🧠 Robustness
+
+- Database diagnostics now adapt to schema differences:
+    - no crashes on missing tables (e.g. `planet_search`)
+    - no crashes on missing columns (e.g. `deleted`)
+    - graceful fallback with `n/a` values
+
+### 🔧 Refactor
+
+- Removed legacy database counting logic (`DatabaseCounts`)
+- Centralized DB introspection in `db::status`
+- Cleaned unused functions and fields across DB layer
+- Improved separation between:
+    - data collection (DB layer)
+    - rendering (UI layer)
+
+### 🧹 Cleanup
+
+- Resolved all Clippy warnings (`-D warnings`)
+- Removed dead code and unused helpers
+
+### 📚 Documentation
+
+- Updated README to reflect v0.9.x capabilities
+- Updated ROADMAP with v0.9.0 and v0.9.1 milestones
+
+---
+
 ## [0.9.0] - 2026-03-24
 
 ### 🚀 Features

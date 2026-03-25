@@ -238,17 +238,17 @@ impl App {
 
     /// Displays current database counters.
     fn show_database_info(&self) -> Result<()> {
-        ui::show_section_title("Database info");
+        let status = crate::db::status::collect_database_status(
+            self.db.history_conn(),
+            self.db.galaxy_conn(),
+            self.db.get_galaxy_path(),
+        )?;
 
-        let counts = self.db.get_database_counts()?;
-        println!("Planets        : {}", counts.planets);
-        println!("Aliases        : {}", counts.aliases);
-        println!("History entries: {}", counts.history_entries);
+        ui::show_database_status(&status);
 
         ui::prompt_go_back()?;
         Ok(())
     }
-
     /// Displays a placeholder for unfinished sections.
     fn show_not_implemented(&self, feature_name: &str) {
         ui::show_section_title(feature_name);

@@ -25,7 +25,7 @@
 
 ## v0.3.0
 
-* [x] small-screen oriented UI structure
+* [x] small-screen oriented UI
 * [x] interactive navigation flow
 * [x] improved input handling
 
@@ -34,74 +34,83 @@
 ## v0.4.x
 
 * [x] search improvements
-* [x] direct selection optimization (single result auto-select)
-* [x] better navigation flow (ENTER = back)
-* [x] improved menu UX
+* [x] direct selection optimization
+* [x] improved navigation flow
+* [x] better menu UX
 
 ---
 
 ## v0.5.x
 
-* [x] obstacle detection along route
-* [x] detour candidate generation
-* [x] scoring system (distance + penalties)
-* [x] detour selection
-* [x] collision explain output
-* [x] candidate evaluation output
+* [x] obstacle detection
+* [x] detour generation
+* [x] scoring system (initial)
+* [x] collision explain
+* [x] candidate evaluation
 
 ---
 
-## v0.6.0
+## v0.6.x
 
-* [x] path-based routing (multi-segment)
-* [x] waypoint insertion into route
-* [x] iterative routing engine (first version)
-* [x] final route recomputation
-* [x] final route safety validation
-* [x] direct vs final route distinction in output
-
----
-
-## v0.6.1
-
+* [x] path-based routing
+* [x] waypoint insertion
+* [x] iterative routing engine
+* [x] final route validation
 * [x] routing iteration explain
-* [x] iteration tracking (segment + obstacle)
-* [x] selected candidate per iteration
-* [x] integration of iteration history into RouteSummary
-* [x] improved route explain readability
-
----
-
-## v0.6.2
-
-* [x] dynamic obstacle loading based on route bounding box
-* [x] integration of obstacle queries into routing flow
-* [x] improved consistency between routing and database layer
+* [x] dynamic obstacle loading
 
 ---
 
 ## v0.7.0
 
 * [x] true multi-waypoint routing
-* [x] multiple collision handling across expanded path
-* [x] iterative refinement loop (multi-step routing)
-* [x] collision detection on updated path segments
-* [x] insertion of multiple waypoints
-* [x] grouped candidate evaluation per iteration
-* [x] final path generation (explicit waypoint sequence)
-* [x] final collision detection (post-routing validation)
+* [x] multi-step collision handling
+* [x] iterative refinement loop
+* [x] grouped candidate evaluation
+* [x] final path generation
 * [x] total iteration tracking
-* [x] improved routing explain structure
 
 ---
 
-## v0.8.0 (next)
+## v0.8.0
 
-* [ ] explain optimization for compact displays
-* [ ] scoring refinement (closer to desktop core)
-* [ ] performance improvements for large datasets
-* [ ] route persistence (save/load)
-* [ ] route history navigation
+* [x] route persistence (save/load)
+* [x] route history navigation
+* [x] database meta table
+* [x] application lifecycle tracking (install/start)
+
+---
+
+## v0.9.0
+
+* [x] advanced scoring system
+
+    * turn penalty
+    * proximity penalty
+    * offset penalty
+* [x] route quality metrics
+* [x] route explain persistence (JSON)
+* [x] explain replay from history
+* [x] route fingerprint deduplication
+* [x] explain backfill for existing routes
+
+---
+
+## v0.9.1
+
+* [x] database status screen (menu 5)
+* [x] schema-aware diagnostics (no crash on missing tables/columns)
+* [x] improved DB introspection (meta, counts, schema, FTS)
+* [x] small fixes and refactor after 0.9.0
+
+---
+
+## v0.10.0 (next)
+
+* [ ] explain compact mode (small displays)
+* [ ] export route explain (JSON)
+* [ ] favorites system
+* [ ] route filtering and management
 
 ---
 
@@ -110,14 +119,14 @@
 * [ ] stable routing engine
 * [ ] consistent behavior with desktop core
 * [ ] optimized performance for small devices
-* [ ] production-ready Pico-oriented UX
+* [ ] production-ready Pico UX
 
 ---
 
 ## Long-term ideas
 
 * PicoCalc hardware integration
-* graphical route preview (lightweight)
-* advanced filtering and search
-* import/export routes
+* lightweight graphical route preview
+* advanced filtering/search
+* route import/export
 * API compatibility with desktop core
