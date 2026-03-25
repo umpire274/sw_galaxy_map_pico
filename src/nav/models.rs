@@ -126,6 +126,8 @@ pub struct DetourCandidate {
     pub is_valid: bool,
     /// Optional rejection reason.
     pub rejection_reason: Option<String>,
+    /// Penalty for using more offset than strictly required.
+    pub offset_penalty: f64,
 }
 
 /// Route engine tuning parameters.
@@ -208,6 +210,8 @@ pub struct RouteSummary {
     pub total_iterations: usize,
     /// Final collision still present after routing, if any.
     pub final_collision: Option<ObstacleCheck>,
+    /// Aggregated quality metrics for the final route.
+    pub quality_metrics: RouteQualityMetrics,
 }
 
 /// A full route path composed of multiple points.
@@ -239,4 +243,23 @@ pub struct RouteIterationExplain {
     pub candidates: Vec<DetourCandidate>,
     /// Selected candidate, if any.
     pub selected_candidate: Option<DetourCandidate>,
+}
+
+/// Aggregated quality metrics for the final route.
+#[derive(Debug, Clone)]
+pub struct RouteQualityMetrics {
+    /// Number of inserted waypoints in the final path.
+    pub waypoint_count: usize,
+    /// Extra distance added by the final route compared to the direct route.
+    pub detour_overhead_pc: f64,
+    /// Maximum turn penalty among selected detours.
+    pub max_turn_penalty: f64,
+    /// Sum of turn penalties across selected detours.
+    pub total_turn_penalty: f64,
+    /// Sum of proximity penalties across selected detours.
+    pub total_proximity_penalty: f64,
+    /// Maximum offset penalty among selected detours.
+    pub max_offset_penalty: f64,
+    /// Sum of offset penalties across selected detours.
+    pub total_offset_penalty: f64,
 }

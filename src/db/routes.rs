@@ -4,6 +4,7 @@ use anyhow::{Context, Result};
 use rusqlite::{Connection, OptionalExtension, params};
 
 use crate::nav::models::RouteSummary;
+use crate::nav::route::build_route_fingerprint;
 
 /// One route row for recent-routes listing.
 #[derive(Debug, Clone)]
@@ -66,22 +67,78 @@ pub struct SavedRouteDetails {
     pub total_iterations: i64,
     /// UTC creation timestamp.
     pub created_at_utc: String,
+    pub route_explain_json: Option<String>,
     /// Final saved path points.
     pub points: Vec<SavedRoutePoint>,
 }
 
+/// Result of a route save operation.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SaveRouteOutcome {
+    /// A new route row was inserted.
+    Inserted(i64),
+    /// An identical route was already present.
+    AlreadyExists(i64),
+}
+
+/// Endpoint metadata used when saving one computed route.
+#[derive(Debug, Clone)]
+pub struct SaveRouteEndpoints<'a> {
+    /// Origin planet ID.
+    pub from_planet_id: i64,
+    /// Origin planet display name.
+    pub from_planet_name: &'a str,
+    /// Destination planet ID.
+    pub to_planet_id: i64,
+    /// Destination planet display name.
+    pub to_planet_name: &'a str,
+}
+
 /// Saves one computed route and its final path into the history database.
 ///
-/// Returns the newly created route ID.
+/// If an identical route already exists, returns its existing ID instead of
+/// inserting a duplicate row.
 pub fn save_route(
     conn: &mut Connection,
-    from_planet_id: i64,
-    from_planet_name: &str,
-    to_planet_id: i64,
-    to_planet_name: &str,
+    endpoints: &SaveRouteEndpoints<'_>,
     summary: &RouteSummary,
+    route_explain_json: Option<&str>,
     created_at_utc: &str,
-) -> Result<i64> {
+) -> Result<SaveRouteOutcome> {
+    let fingerprint =
+        build_route_fingerprint(endpoints.from_planet_id, endpoints.to_planet_id, summary);
+
+    if let Some(existing_id) = conn
+        .query_row(
+            "SELECT id FROM routes WHERE route_fingerprint = ?1 LIMIT 1",
+            [&fingerprint],
+            |row| row.get::<_, i64>(0),
+        )
+        .optional()?
+    {
+        if let Some(json) = route_explain_json {
+            let existing_explain: Option<String> = conn
+                .query_row(
+                    "SELECT route_explain_json FROM routes WHERE id = ?1",
+                    [existing_id],
+                    |row| row.get(0),
+                )
+                .optional()?;
+
+            // 👇 QUI va questa riga
+            let should_update_explain = should_fill_missing_explain(existing_explain.as_deref());
+
+            if should_update_explain {
+                conn.execute(
+                    "UPDATE routes SET route_explain_json = ?1 WHERE id = ?2",
+                    rusqlite::params![json, existing_id],
+                )?;
+            }
+        }
+
+        return Ok(SaveRouteOutcome::AlreadyExists(existing_id));
+    }
+
     let tx = conn
         .transaction()
         .context("Failed to start route save transaction")?;
@@ -100,14 +157,16 @@ pub fn save_route(
             direct_is_safe,
             final_is_safe,
             total_iterations,
-            created_at_utc
-        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
+            created_at_utc,
+            route_fingerprint,
+            route_explain_json
+        ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)
         "#,
         params![
-            from_planet_id,
-            from_planet_name,
-            to_planet_id,
-            to_planet_name,
+            endpoints.from_planet_id,
+            endpoints.from_planet_name,
+            endpoints.to_planet_id,
+            endpoints.to_planet_name,
             summary.distance_parsec,
             summary.final_distance_parsec,
             summary.eta_seconds as i64,
@@ -120,6 +179,8 @@ pub fn save_route(
             if summary.detour_is_safe { 1 } else { 0 },
             summary.total_iterations as i64,
             created_at_utc,
+            fingerprint,
+            route_explain_json,
         ],
     )?;
 
@@ -141,7 +202,7 @@ pub fn save_route(
     tx.commit()
         .context("Failed to commit route save transaction")?;
 
-    Ok(route_id)
+    Ok(SaveRouteOutcome::Inserted(route_id))
 }
 
 /// Returns the most recent saved routes.
@@ -202,7 +263,8 @@ pub fn get_route_details(conn: &Connection, route_id: i64) -> Result<Option<Save
                 direct_is_safe,
                 final_is_safe,
                 total_iterations,
-                created_at_utc
+                created_at_utc,
+                route_explain_json
             FROM routes
             WHERE id = ?1
             "#,
@@ -222,6 +284,7 @@ pub fn get_route_details(conn: &Connection, route_id: i64) -> Result<Option<Save
                     final_is_safe: row.get::<_, i64>(10)? != 0,
                     total_iterations: row.get(11)?,
                     created_at_utc: row.get(12)?,
+                    route_explain_json: row.get(13)?,
                     points: Vec::new(),
                 })
             },
@@ -254,4 +317,8 @@ pub fn get_route_details(conn: &Connection, route_id: i64) -> Result<Option<Save
     }
 
     Ok(Some(details))
+}
+
+fn should_fill_missing_explain(existing: Option<&str>) -> bool {
+    existing.map(str::trim).filter(|s| !s.is_empty()).is_none()
 }

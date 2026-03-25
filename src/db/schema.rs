@@ -5,7 +5,7 @@ use rusqlite::Connection;
 
 /// Initializes the writable history schema if it does not already exist.
 pub fn initialize_history_schema(conn: &Connection) -> Result<()> {
-    eprintln!("Initializing history database schema if not already present...");
+    print!("[db:history] Ensuring history schema ...... ");
 
     conn.execute_batch(
         r#"
@@ -16,6 +16,12 @@ pub fn initialize_history_schema(conn: &Connection) -> Result<()> {
             to_planet_id    INTEGER NOT NULL,
             distance        REAL NOT NULL,
             eta_minutes     INTEGER NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS meta (
+            key         TEXT PRIMARY KEY,
+            value       TEXT NOT NULL,
+            updated_utc TEXT NOT NULL
         );
         "#,
     )?;
@@ -35,8 +41,13 @@ pub fn initialize_history_schema(conn: &Connection) -> Result<()> {
             direct_is_safe      INTEGER NOT NULL,
             final_is_safe       INTEGER NOT NULL,
             total_iterations    INTEGER NOT NULL,
+            route_fingerprint   TEXT,
+            route_explain_json  TEXT,
             created_at_utc      TEXT NOT NULL
         );
+
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_routes_fingerprint
+            ON routes(route_fingerprint);
 
         CREATE TABLE IF NOT EXISTS route_points (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,13 +63,13 @@ pub fn initialize_history_schema(conn: &Connection) -> Result<()> {
         "#,
     )?;
 
-    eprintln!("Initialization done.");
+    println!("Done.");
     Ok(())
 }
 
 /// Initializes the galaxy catalog schema if it does not already exist.
 pub fn initialize_galaxy_schema(conn: &Connection) -> Result<()> {
-    eprintln!("Initializing galaxy database schema if not already present...");
+    print!("[db:galaxy]  Ensuring galaxy schema ....... ");
 
     conn.execute_batch(
         r#"
@@ -150,6 +161,6 @@ pub fn initialize_galaxy_schema(conn: &Connection) -> Result<()> {
         "#,
     )?;
 
-    eprintln!("Initialization done.");
+    println!("Done.");
     Ok(())
 }
