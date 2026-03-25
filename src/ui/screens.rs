@@ -1,6 +1,7 @@
 //! Textual screen helpers.
 
 use crate::db::planets::PlanetDetails;
+use crate::db::route_explain::SavedRouteExplain;
 use crate::db::routes::{RecentRouteRow, SavedRouteDetails};
 use crate::nav::eta::{effective_speed_parsec_per_hour, format_eta_dd_hh_mm_ss};
 use crate::nav::models::{RouteSummary, SpeedProfile};
@@ -146,6 +147,37 @@ pub fn show_route_result(from: &str, to: &str, route: &RouteSummary, speed: Spee
         );
     }
 
+    println!();
+    println!("Route quality:");
+    println!(
+        "  waypoint count : {}",
+        route.quality_metrics.waypoint_count
+    );
+    println!(
+        "  detour overhead: {:.6} pc",
+        route.quality_metrics.detour_overhead_pc
+    );
+    println!(
+        "  max turn pen.  : {:.6}",
+        route.quality_metrics.max_turn_penalty
+    );
+    println!(
+        "  total turn pen.: {:.6}",
+        route.quality_metrics.total_turn_penalty
+    );
+    println!(
+        "  total prox pen.: {:.6}",
+        route.quality_metrics.total_proximity_penalty
+    );
+    println!(
+        "  max offset pen.: {:.6}",
+        route.quality_metrics.max_offset_penalty
+    );
+    println!(
+        "  total off. pen.: {:.6}",
+        route.quality_metrics.total_offset_penalty
+    );
+
     if let Some(v) = &route.closest_violation {
         println!();
         println!("Direct collision:");
@@ -201,6 +233,7 @@ pub fn show_route_result(from: &str, to: &str, route: &RouteSummary, speed: Spee
             println!("  turn penalty   : {:.6}", candidate.turn_penalty);
             println!("  back penalty   : {:.6}", candidate.back_penalty);
             println!("  proximity pen. : {:.6}", candidate.proximity_penalty);
+            println!("  offset penalty : {:.6}", candidate.offset_penalty);
         }
         None => {
             println!();
@@ -268,11 +301,12 @@ pub fn show_route_result(from: &str, to: &str, route: &RouteSummary, speed: Spee
                         println!("          reason  : {reason}");
                     } else {
                         println!(
-                            "          breakdown: base={:.6} turn={:.6} back={:.6} prox={:.6}",
+                            "          breakdown: base={:.6} turn={:.6} back={:.6} prox={:.6} off={:.6}",
                             candidate.base_distance,
                             candidate.turn_penalty,
                             candidate.back_penalty,
-                            candidate.proximity_penalty
+                            candidate.proximity_penalty,
+                            candidate.offset_penalty
                         );
                     }
                 }
@@ -357,13 +391,214 @@ pub fn show_saved_route_details(route: &SavedRouteDetails) {
     );
     println!("Total iterations : {}", route.total_iterations);
 
+    // Show final path only if no explain JSON is available
+    let has_explain = route
+        .route_explain_json
+        .as_deref()
+        .map(str::trim)
+        .filter(|s| !s.is_empty())
+        .is_some();
+
+    if !has_explain {
+        println!();
+        println!("Final path:");
+
+        if route.points.is_empty() {
+            println!("  none");
+        } else {
+            for point in &route.points {
+                println!("  {:02}) ({:.3}, {:.3})", point.seq_index, point.x, point.y);
+            }
+        }
+    }
+}
+
+/// Renders a saved route explain snapshot loaded from JSON.
+pub fn show_saved_route_explain(explain: &SavedRouteExplain) {
+    println!();
+    println!("== Saved route explain ==");
+
+    println!("Direct route     : {}", explain.direct_route_status);
+    println!("Final route      : {}", explain.final_route_status);
+    println!("Total iterations : {}", explain.total_iterations);
+
+    match &explain.final_collision {
+        Some(collision) => {
+            println!(
+                "Final collision  : {} [{}]",
+                collision.obstacle_name, collision.obstacle_id
+            );
+        }
+        None => {
+            println!("Final collision  : none");
+        }
+    }
+
+    println!();
+    println!("Route quality:");
+    println!("  waypoint count : {}", explain.quality.waypoint_count);
+    println!(
+        "  detour overhead: {:.6} pc",
+        explain.quality.detour_overhead_pc
+    );
+    println!("  max turn pen.  : {:.6}", explain.quality.max_turn_penalty);
+    println!(
+        "  total turn pen.: {:.6}",
+        explain.quality.total_turn_penalty
+    );
+    println!(
+        "  total prox pen.: {:.6}",
+        explain.quality.total_proximity_penalty
+    );
+    println!(
+        "  max offset pen.: {:.6}",
+        explain.quality.max_offset_penalty
+    );
+    println!(
+        "  total off. pen.: {:.6}",
+        explain.quality.total_offset_penalty
+    );
+
+    if let Some(collision) = &explain.direct_collision {
+        println!();
+        println!("Direct collision:");
+        println!(
+            "  obstacle       : {} [{}]",
+            collision.obstacle_name, collision.obstacle_id
+        );
+        println!(
+            "  center         : ({:.3}, {:.3})",
+            collision.obstacle_x, collision.obstacle_y
+        );
+        println!("  closest dist   : {:.3}", collision.closest_distance);
+        println!("  required       : {:.3}", collision.required_clearance);
+        println!(
+            "  closest point  : ({:.3}, {:.3})",
+            collision.closest_point_x, collision.closest_point_y
+        );
+        println!("  t              : {:.3}", collision.t);
+    }
+
+    if let Some(collision) = &explain.collision_explain {
+        println!();
+        println!("Collision explain:");
+        println!(
+            "  obstacle       : {} [{}]",
+            collision.obstacle_name, collision.obstacle_id
+        );
+        println!(
+            "  center         : ({:.3}, {:.3})",
+            collision.obstacle_x, collision.obstacle_y
+        );
+        println!("  radius         : {:.3}", collision.obstacle_radius);
+        println!("  closest dist   : {:.3}", collision.closest_distance);
+        println!("  required       : {:.3}", collision.required_clearance);
+        println!("  violated by    : {:.3}", collision.violated_by);
+        println!(
+            "  closest point  : ({:.3}, {:.3})",
+            collision.closest_point_x, collision.closest_point_y
+        );
+        println!("  t              : {:.3}", collision.t);
+        println!("  penalty        : {:.3}", collision.proximity_penalty);
+    }
+
+    if let Some(detour) = &explain.last_selected_detour {
+        println!();
+        println!("Last selected detour:");
+        println!(
+            "  waypoint       : ({:.3}, {:.3})",
+            detour.waypoint_x, detour.waypoint_y
+        );
+        println!("  side           : {}", detour.side);
+        println!("  offset used    : {:.3}", detour.offset_used);
+        println!("  score          : {:.6}", detour.score);
+        println!("  base distance  : {:.6}", detour.base_distance);
+        println!("  turn penalty   : {:.6}", detour.turn_penalty);
+        println!("  back penalty   : {:.6}", detour.back_penalty);
+        println!("  proximity pen. : {:.6}", detour.proximity_penalty);
+        println!("  offset penalty : {:.6}", detour.offset_penalty);
+    }
+
+    if explain.iterations.is_empty() {
+        println!();
+        println!("Routing iterations: none");
+    } else {
+        println!();
+        println!("Routing iterations:");
+
+        for step in &explain.iterations {
+            println!("  Iteration {}:", step.iteration);
+            println!("    segment       : {}", step.segment_index);
+            println!(
+                "    obstacle      : {} [{}]",
+                step.collision.obstacle_name, step.collision.obstacle_id
+            );
+            println!(
+                "    center        : ({:.3}, {:.3})",
+                step.collision.obstacle_x, step.collision.obstacle_y
+            );
+            println!("    closest dist  : {:.3}", step.collision.closest_distance);
+            println!(
+                "    required      : {:.3}",
+                step.collision.required_clearance
+            );
+            println!("    t             : {:.3}", step.collision.t);
+
+            match &step.selected_candidate {
+                Some(selected) => {
+                    println!(
+                        "    selected      : side={} offset={:.3} score={:.6}",
+                        selected.side, selected.offset_used, selected.score
+                    );
+                    println!(
+                        "                    waypoint=({:.3}, {:.3})",
+                        selected.waypoint_x, selected.waypoint_y
+                    );
+                }
+                None => {
+                    println!("    selected      : none");
+                }
+            }
+
+            if step.candidates.is_empty() {
+                println!("    candidates    : none");
+            } else {
+                println!("    candidates:");
+
+                for (index, candidate) in step.candidates.iter().enumerate() {
+                    println!(
+                        "      {:02}) side={} offset={:.3} valid={} score={:.6}",
+                        index + 1,
+                        candidate.side,
+                        candidate.offset_used,
+                        candidate.is_valid,
+                        candidate.score
+                    );
+
+                    if let Some(reason) = &candidate.rejection_reason {
+                        println!("          reason  : {reason}");
+                    } else {
+                        println!(
+                            "          breakdown: base={:.6} turn={:.6} back={:.6} prox={:.6} off={:.6}",
+                            candidate.base_distance,
+                            candidate.turn_penalty,
+                            candidate.back_penalty,
+                            candidate.proximity_penalty,
+                            candidate.offset_penalty
+                        );
+                    }
+                }
+            }
+        }
+    }
+
     println!();
     println!("Final path:");
-    if route.points.is_empty() {
+    if explain.final_path.is_empty() {
         println!("  none");
     } else {
-        for point in &route.points {
-            println!("  {:02}) ({:.3}, {:.3})", point.seq_index, point.x, point.y);
+        for (index, point) in explain.final_path.iter().enumerate() {
+            println!("  {:02}) ({:.3}, {:.3})", index, point.x, point.y);
         }
     }
 }

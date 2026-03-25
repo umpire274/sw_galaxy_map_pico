@@ -5,12 +5,17 @@ use anyhow::Result;
 use crate::config::Cli;
 use crate::db::Database;
 use crate::db::mapper::convert_to_nav_planet;
+use crate::db::meta::{meta_set, meta_set_if_absent};
+use crate::db::migrate::migrate_history_db;
 use crate::db::planets::{PlanetDetails, get_planet_details, search_planets};
 use crate::db::queries::{ObstacleQueryBounds, list_routing_obstacles_in_bbox};
-use crate::db::routes::{get_route_details, list_recent_routes};
+use crate::db::routes::{
+    SaveRouteEndpoints, SaveRouteOutcome, get_route_details, list_recent_routes,
+};
 use crate::nav::models::{RouteRequest, SpeedProfile};
-use crate::nav::route::calculate_iterative_route;
+use crate::nav::route::{build_saved_route_explain, calculate_iterative_route};
 use crate::ui;
+use crate::utils::time::now_utc_iso;
 
 /// Central application object.
 pub struct App {
@@ -28,6 +33,26 @@ impl App {
     /// Bootstraps the application and validates the configured databases.
     pub fn bootstrap(cli: Cli) -> Result<Self> {
         let db = Database::new(&cli.galaxy_db, &cli.history_db)?;
+
+        migrate_history_db(db.history_conn())?;
+        println!();
+
+        let now = now_utc_iso();
+
+        // Install time: written only once.
+        meta_set_if_absent(db.history_conn(), "installed_utc", &now, &now)?;
+
+        // Current application version: always updated.
+        meta_set(
+            db.history_conn(),
+            "app_version",
+            env!("CARGO_PKG_VERSION"),
+            &now,
+        )?;
+
+        // Last start time: always updated.
+        meta_set(db.history_conn(), "last_start_utc", &now, &now)?;
+
         Ok(Self { db })
     }
 
@@ -118,22 +143,36 @@ impl App {
 
         let route = calculate_iterative_route(&request, &mut loader);
 
-        let created_at_utc = crate::utils::time::now_utc_iso();
+        let created_at_utc = now_utc_iso();
+        let explain = build_saved_route_explain(&route);
+        let route_explain_json = serde_json::to_string(&explain)?;
 
-        let route_id = crate::db::routes::save_route(
+        let endpoints = SaveRouteEndpoints {
+            from_planet_id: from.remote_id,
+            from_planet_name: &from.name,
+            to_planet_id: to.remote_id,
+            to_planet_name: &to.name,
+        };
+
+        let save_outcome = crate::db::routes::save_route(
             self.db.history_conn_mut(),
-            from.remote_id,
-            &from.name,
-            to.remote_id,
-            &to.name,
+            &endpoints,
             &route,
+            Some(route_explain_json.as_str()),
             &created_at_utc,
         )?;
 
         ui::show_route_result(&from.name, &to.name, &route, speed_profile);
 
         println!();
-        println!("Route saved successfully. ID: {}", route_id);
+        match save_outcome {
+            SaveRouteOutcome::Inserted(route_id) => {
+                println!("Route saved successfully. ID: {}", route_id);
+            }
+            SaveRouteOutcome::AlreadyExists(route_id) => {
+                println!("Route already present in history. ID: {}", route_id);
+            }
+        }
 
         ui::prompt_go_back()?;
 
@@ -168,6 +207,25 @@ impl App {
             match details {
                 Some(route) => {
                     ui::show_saved_route_details(&route);
+
+                    if let Some(json) = &route.route_explain_json {
+                        let trimmed = json.trim();
+
+                        if !trimmed.is_empty() {
+                            match serde_json::from_str::<crate::db::route_explain::SavedRouteExplain>(
+                                trimmed,
+                            ) {
+                                Ok(explain) => {
+                                    ui::show_saved_route_explain(&explain);
+                                }
+                                Err(err) => {
+                                    println!();
+                                    println!("Saved explain JSON could not be parsed: {}", err);
+                                }
+                            }
+                        }
+                    }
+
                     ui::prompt_go_back()?;
                 }
                 None => {

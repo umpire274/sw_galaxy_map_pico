@@ -4,6 +4,57 @@ All notable changes to this project will be documented in this file.
 
 ---
 
+## [0.9.0] - 2026-03-24
+
+### 🚀 Features
+
+- Introduced advanced route scoring:
+    - Turn penalty
+    - Proximity penalty
+    - Offset penalty
+- Added full route quality metrics:
+    - Waypoint count
+    - Detour overhead
+    - Max / total penalties (turn, proximity, offset)
+- Implemented iterative routing explain model:
+    - Per-iteration breakdown
+    - Candidate evaluation details
+    - Selected detour tracking
+
+### 💾 Persistence
+
+- Added `route_explain_json` to `routes` table
+- Persist full explain snapshot for each computed route
+- Automatic backfill:
+    - If a route already exists but has no explain JSON, it is updated
+- Introduced route fingerprint-based deduplication
+
+### 🔍 UX Improvements
+
+- Added full explain visualization in **Recent routes**
+- Output parity between:
+    - Live route calculation
+    - Saved route inspection
+- Removed duplicated "Final path" section when explain is available
+- Improved readability and structure of route output
+
+### 🧱 Internal
+
+- Refactored `save_route(...)` to use `SaveRouteEndpoints`
+- Introduced helper logic for missing explain detection
+- Cleaned Clippy warnings (`-D warnings` compliant)
+- Improved separation between:
+    - navigation logic
+    - persistence layer
+    - UI rendering
+
+### 🐛 Fixes
+
+- Fixed missing explain update for already existing routes
+- Fixed handling of empty / NULL JSON fields
+
+---
+
 ## [0.8.0] - 2026-03-24
 
 ### 🚀 Added

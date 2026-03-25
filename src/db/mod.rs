@@ -4,8 +4,11 @@ pub mod aliases;
 pub mod connection;
 pub mod history;
 pub mod mapper;
+pub mod meta;
+pub mod migrate;
 pub mod planets;
 pub mod queries;
+pub mod route_explain;
 pub mod routes;
 pub mod schema;
 
@@ -33,6 +36,7 @@ impl Database {
     /// Creates a new database facade and initializes writable schema.
     pub fn new(galaxy_db_path: &str, history_db_path: &str) -> Result<Self> {
         let connections = DatabaseConnections::open(galaxy_db_path, history_db_path)?;
+        println!();
         schema::initialize_galaxy_schema(&connections.galaxy)?;
         schema::initialize_history_schema(&connections.history)?;
         Ok(Self { connections })

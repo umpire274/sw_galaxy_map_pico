@@ -7,4 +7,4 @@ pub mod geometry;
 pub mod models;
 pub mod obstacle;
 pub mod route;
-mod segment;
+pub mod segment;
