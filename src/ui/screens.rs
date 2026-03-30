@@ -7,6 +7,31 @@ use crate::db::status::DatabaseStatus;
 use crate::nav::eta::{effective_speed_parsec_per_hour, format_eta_dd_hh_mm_ss};
 use crate::nav::models::{RouteSummary, SpeedProfile};
 
+/// Outp
+/// ut detail level for route explain rendering.
+#[allow(dead_code)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExplainMode {
+    /// Full diagnostic output.
+    Full,
+    /// Compact output optimized for small displays.
+    Compact,
+}
+
+/// Renders a route result using the selected explain mode.
+pub fn show_route_result_with_mode(
+    from: &str,
+    to: &str,
+    route: &RouteSummary,
+    speed_profile: SpeedProfile,
+    mode: ExplainMode,
+) {
+    match mode {
+        ExplainMode::Full => show_route_result(from, to, route, speed_profile),
+        ExplainMode::Compact => show_route_result_compact(from, to, route),
+    }
+}
+
 /// Renders the application banner.
 pub fn show_banner() {
     println!("====================================");
@@ -415,6 +440,7 @@ pub fn show_saved_route_details(route: &SavedRouteDetails) {
 }
 
 /// Renders a saved route explain snapshot loaded from JSON.
+#[allow(dead_code)]
 pub fn show_saved_route_explain(explain: &SavedRouteExplain) {
     println!();
     println!("== Saved route explain ==");
@@ -656,5 +682,132 @@ pub fn show_database_status(status: &DatabaseStatus) {
     println!("FTS:");
     for (k, v) in &status.fts_info {
         println!("  {k}: {v}");
+    }
+}
+
+/// Renders a compact route explain optimized for small displays.
+///
+/// This view intentionally focuses on:
+/// - final route outcome
+/// - iteration count
+/// - waypoint count
+/// - detour overhead
+/// - selected detours
+/// - final path
+pub fn show_route_result_compact(from: &str, to: &str, route: &RouteSummary) {
+    println!();
+    println!("== Route compact ==");
+    println!("{from} -> {to}");
+
+    let final_status = if route.detour_is_safe {
+        "safe"
+    } else {
+        "unsafe"
+    };
+
+    println!(
+        "{}  iter:{}  wp:{}",
+        final_status, route.total_iterations, route.quality_metrics.waypoint_count
+    );
+
+    println!("{:.3} pc", route.final_distance_parsec);
+    println!("{}", format_eta_dd_hh_mm_ss(route.final_eta_seconds));
+    println!("+{:.3} pc", route.quality_metrics.detour_overhead_pc);
+
+    println!();
+    println!("== Detours ==");
+
+    if route.iterations.is_empty() {
+        println!("none");
+    } else {
+        for step in &route.iterations {
+            match &step.selected_candidate {
+                Some(selected) => {
+                    let side = match selected.side.as_str() {
+                        "left" => "L",
+                        "right" => "R",
+                        other => other,
+                    };
+
+                    println!(
+                        "#{} {} {} {:.2}",
+                        step.iteration, step.collision.obstacle_name, side, selected.offset_used
+                    );
+                }
+                None => {
+                    println!("#{} {} none", step.iteration, step.collision.obstacle_name);
+                }
+            }
+        }
+    }
+
+    println!();
+    println!("== Path ==");
+
+    if route.final_path.is_empty() {
+        println!("none");
+    } else {
+        for (index, point) in route.final_path.iter().enumerate() {
+            println!("{} ({:.0},{:.0})", index, point.x, point.y);
+        }
+    }
+}
+
+/// Renders a compact saved route explain optimized for small displays.
+pub fn show_saved_route_explain_compact(
+    from: &str,
+    to: &str,
+    explain: &SavedRouteExplain,
+    final_distance_parsec: f64,
+    final_eta_seconds: i64,
+) {
+    println!("== Route compact ==");
+    println!("{from} -> {to}");
+
+    println!(
+        "{}  iter:{}  wp:{}",
+        explain.final_route_status, explain.total_iterations, explain.quality.waypoint_count
+    );
+
+    println!("{:.3} pc", final_distance_parsec);
+    println!("{}", format_eta_dd_hh_mm_ss(final_eta_seconds as u64));
+    println!("+{:.3} pc", explain.quality.detour_overhead_pc);
+
+    println!();
+    println!("== Detours ==");
+
+    if explain.iterations.is_empty() {
+        println!("none");
+    } else {
+        for step in &explain.iterations {
+            match &step.selected_candidate {
+                Some(selected) => {
+                    let side = match selected.side.as_str() {
+                        "left" => "L",
+                        "right" => "R",
+                        other => other,
+                    };
+
+                    println!(
+                        "#{} {} {} {:.2}",
+                        step.iteration, step.collision.obstacle_name, side, selected.offset_used
+                    );
+                }
+                None => {
+                    println!("#{} {} none", step.iteration, step.collision.obstacle_name);
+                }
+            }
+        }
+    }
+
+    println!();
+    println!("== Path ==");
+
+    if explain.final_path.is_empty() {
+        println!("none");
+    } else {
+        for (index, point) in explain.final_path.iter().enumerate() {
+            println!("{} ({:.0},{:.0})", index, point.x, point.y);
+        }
     }
 }

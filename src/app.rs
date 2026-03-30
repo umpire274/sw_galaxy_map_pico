@@ -15,6 +15,7 @@ use crate::db::routes::{
 use crate::nav::models::{RouteRequest, SpeedProfile};
 use crate::nav::route::{build_saved_route_explain, calculate_iterative_route};
 use crate::ui;
+use crate::ui::screens::ExplainMode;
 use crate::utils::time::now_utc_iso;
 
 /// Central application object.
@@ -162,7 +163,11 @@ impl App {
             &created_at_utc,
         )?;
 
-        ui::show_route_result(&from.name, &to.name, &route, speed_profile);
+        // TODO: make this configurable from settings / profile.
+        let explain_mode = ExplainMode::Compact;
+        // let explain_mode = ui::ExplainMode::Full;
+
+        ui::show_route_result_with_mode(&from.name, &to.name, &route, speed_profile, explain_mode);
 
         println!();
         match save_outcome {
@@ -206,8 +211,6 @@ impl App {
 
             match details {
                 Some(route) => {
-                    ui::show_saved_route_details(&route);
-
                     if let Some(json) = &route.route_explain_json {
                         let trimmed = json.trim();
 
@@ -216,14 +219,25 @@ impl App {
                                 trimmed,
                             ) {
                                 Ok(explain) => {
-                                    ui::show_saved_route_explain(&explain);
+                                    ui::show_saved_route_explain_compact(
+                                        &route.from_planet_name,
+                                        &route.to_planet_name,
+                                        &explain,
+                                        route.final_distance_pc,
+                                        route.final_eta_seconds,
+                                    );
                                 }
                                 Err(err) => {
                                     println!();
                                     println!("Saved explain JSON could not be parsed: {}", err);
+                                    ui::show_saved_route_details(&route);
                                 }
                             }
+                        } else {
+                            ui::show_saved_route_details(&route);
                         }
+                    } else {
+                        ui::show_saved_route_details(&route);
                     }
 
                     ui::prompt_go_back()?;
